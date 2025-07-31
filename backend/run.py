@@ -1,0 +1,118 @@
+# backend/run.py
+import os
+import json
+from flask import Flask, current_app
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_cors import CORS
+from datetime import datetime
+import click
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+db = SQLAlchemy()
+migrate = Migrate()
+
+def create_app():
+    app = Flask(__name__)
+
+    app.config.from_mapping(
+        SECRET_KEY=os.environ.get('SECRET_KEY') or 'dev_secret_key',
+        SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL') or \
+            'sqlite:///' + os.path.join(app.instance_path, 'blog.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_BINDS={
+            'blog_db': 'sqlite:///' + os.path.join(app.instance_path, 'blog.db'),
+            'drive_stats': 'sqlite:///' + os.path.join(app.instance_path, 'drive_stats.db')
+        }
+    )
+
+    os.makedirs(app.instance_path, exist_ok=True)
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    CORS(app, resources={r"/api/*": {"origins": ["http://localhost", "http://localhost:5173"]}})
+
+    app.logger.info("Firebase Admin SDK 未使用。指标将本地存储。")
+
+    from blog_app.routes import blog_bp
+    from metrics_app.routes import metrics_bp
+    from drive_app.routes import drive_bp
+
+    app.register_blueprint(blog_bp)
+    app.register_blueprint(metrics_bp)
+    app.register_blueprint(drive_bp)
+
+    app.cli.add_command(init_metrics_command)
+    app.cli.add_command(check_db_tables_command) 
+
+    return app
+
+@click.command('init-metrics')
+def init_metrics_command():
+    """初始化数据库中的网站指标。"""
+    with current_app.app_context():
+        from models.metrics import WebsiteMetrics
+        try:
+            metrics_row = WebsiteMetrics.query.get(1)
+            if not metrics_row:
+                new_metrics = WebsiteMetrics(id=1, visitor_count=0, startup_time=datetime.utcnow())
+                db.session.add(new_metrics)
+                db.session.commit()
+                current_app.logger.info("网站指标已在 SQLite 中初始化。")
+            else:
+                current_app.logger.info("网站指标已存在于 SQLite 中。")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"初始化 SQLite 中的网站指标时出错: {e}")
+
+@click.command('check-db-tables')
+@click.argument('db_name', default='all')
+def check_db_tables_command(db_name):
+    """检查数据库中是否存在预期的表。"""
+    with current_app.app_context():
+        from models.blog import Post
+        from models.metrics import WebsiteMetrics
+        from models.stat_type import StatType
+        from models.set_type import SetType
+        from models.drive_piece import DrivePiece, DrivePieceSubstat
+        from models.upgrade_record import UpgradeRecord
+
+        expected_blog_tables = ['post', 'website_metrics']
+        expected_drive_stats_tables = ['stat_types', 'set_types', 'drive_pieces', 'drive_piece_substats', 'upgrade_records']
+
+        if db_name == 'all' or db_name == 'blog_db':
+            print("\n--- 检查 blog.db ---")
+            try:
+                engine_blog = db.get_engine(bind='blog_db')
+                inspector_blog = db.inspect(engine_blog)
+                existing_blog_tables = inspector_blog.get_table_names()
+                print(f"blog.db 中现有表: {existing_blog_tables}")
+                for table in expected_blog_tables:
+                    if table in existing_blog_tables:
+                        print(f"  ✅ 表 '{table}' 在 blog.db 中存在。")
+                    else:
+                        print(f"  ❌ 表 '{table}' 在 blog.db 中缺失！")
+            except Exception as e:
+                print(f"  ❌ 无法连接或检查 blog.db: {e}")
+
+        if db_name == 'all' or db_name == 'drive_stats':
+            print("\n--- 检查 drive_stats.db ---")
+            try:
+                engine_drive = db.get_engine(bind='drive_stats')
+                inspector_drive = db.inspect(engine_drive)
+                existing_drive_tables = inspector_drive.get_table_names()
+                print(f"drive_stats.db 中现有表: {existing_drive_tables}")
+                for table in expected_drive_stats_tables:
+                    if table in existing_drive_tables:
+                        print(f"  ✅ 表 '{table}' 在 drive_stats.db 中存在。")
+                    else:
+                        print(f"  ❌ 表 '{table}' 在 drive_stats.db 中缺失！")
+            except Exception as e:
+                print(f"  ❌ 无法连接或检查 drive_stats.db: {e}")
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True, port=5000)

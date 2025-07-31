@@ -1,0 +1,191 @@
+{
+  "Version": 3,
+  "Type": 0,
+  "FileReferences": {
+    "Moc": "furina.moc3",
+    "Textures": [
+      "furina.8192/texture_00.png"
+    ],
+    "Physics": "furina.physics3.json",
+    "PhysicsV2": {
+      "File": "furina.physics3.json"
+    },
+    "Motions": {
+      "Idle": [
+        {
+          "File": "motions/待机动画.motion3.json",
+          "FileLoop": true,
+          "Priority": 2
+        }
+      ],
+      "1": [
+        {
+          "File": "motions/变芒.motion3.json",
+          "Priority": 3
+        }
+      ],
+      "2": [
+        {
+          "File": "motions/变荒.motion3.json",
+          "Priority": 3
+        }
+      ],
+      "0": [
+        {
+          "File": "motions/恢复原状.motion3.json",
+          "Priority": 9
+        }
+      ],
+      "手": [
+        {
+          "File": "motions/摊手动画.motion3.json",
+          "MotionDuration": 5000,
+          "Priority": 3
+        }
+      ]
+    },
+    "Expressions": [
+      {
+        "Name": "呆毛电风扇.exp3",
+        "File": "expressions/呆毛电风扇.exp3.json"
+      },
+      {
+        "Name": "拿勺子.exp3",
+        "File": "expressions/拿勺子.exp3.json"
+      },
+      {
+        "Name": "拿蛋糕.exp3",
+        "File": "expressions/拿蛋糕.exp3.json"
+      },
+      {
+        "Name": "哭.exp3",
+        "File": "expressions/哭.exp3.json"
+      },
+      {
+        "Name": "喝饮料.exp3",
+        "File": "expressions/喝饮料.exp3.json"
+      },
+      {
+        "Name": "大聪明.exp3",
+        "File": "expressions/大聪明.exp3.json"
+      },
+      {
+        "Name": "小脸红.exp3",
+        "File": "expressions/小脸红.exp3.json"
+      },
+      {
+        "Name": "汗.exp3",
+        "File": "expressions/汗.exp3.json"
+      },
+      {
+        "Name": "托脸.exp3",
+        "File": "expressions/托脸.exp3.json"
+      },
+      {
+        "Name": "星星.exp3",
+        "File": "expressions/星星.exp3.json"
+      },
+      {
+        "Name": "捂嘴.exp3",
+        "File": "expressions/捂嘴.exp3.json"
+      },
+      {
+        "Name": "猫猫嘴.exp3",
+        "File": "expressions/猫猫嘴.exp3.json"
+      },
+      {
+        "Name": "帽子.exp3",
+        "File": "expressions/帽子.exp3.json"
+      },
+      {
+        "Name": "生气.exp3",
+        "File": "expressions/生气.exp3.json"
+      },
+      {
+        "Name": "走路切换.exp3",
+        "File": "expressions/走路切换.exp3.json"
+      }
+    ]
+  },
+  "Controllers": {
+    "ParamHit": {},
+    "ParamLoop": {},
+    "KeyTrigger": {},
+    "ParamTrigger": {},
+    "AreaTrigger": {},
+    "HandTrigger": {},
+    "EyeBlink": {
+      "MinInterval": 500,
+      "MaxInterval": 6000,
+      "Enabled": true
+    },
+    "LipSync": {
+      "Gain": 5.0,
+      "Items": [
+        {
+          "Id": "ParamMouthForm",
+          "Min": 0.0,
+          "Max": 1.0,
+          "Input": 0
+        },
+        {
+          "Id": "ParamMouthOpenY",
+          "Min": 0.0,
+          "Max": 1.0,
+          "Input": 0
+        }
+      ],
+      "Enabled": true
+    },
+    "MouseTracking": {
+      "SmoothTime": 0.15,
+      "Enabled": true
+    },
+    "AutoBreath": {
+      "Enabled": true
+    },
+    "ExtraMotion": {
+      "Enabled": true
+    },
+    "Accelerometer": {
+      "Enabled": true
+    },
+    "Microphone": {},
+    "Transform": {},
+    "FaceTracking": {
+      "Enabled": true
+    },
+    "HandTracking": {},
+    "ParamValue": {},
+    "PartOpacity": {},
+    "ArtmeshOpacity": {},
+    "ArtmeshColor": {},
+    "ArtmeshCulling": {
+      "DefaultMode": 0
+    },
+    "IntimacySystem": {}
+  },
+  "HitAreas": [
+    {
+      "Name": "1",
+      "Id": "ArtMesh319",
+      "Motion": "1"
+    },
+    {
+      "Name": "2",
+      "Id": "ArtMesh212",
+      "Motion": "2"
+    },
+    {
+      "Name": "0",
+      "Id": "ArtMesh293",
+      "Motion": "0"
+    },
+    {
+      "Name": "手",
+      "Id": "ArtMesh784",
+      "Motion": "手"
+    }
+  ],
+  "Options": {}
+}

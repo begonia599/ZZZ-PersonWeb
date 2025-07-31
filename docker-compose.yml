@@ -1,0 +1,38 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173" # 将主机 5173 端口映射到容器的 5173 端口 (Vite dev server 默认端口)
+    volumes:
+      - ./frontend:/app 
+      - /app/node_modules 
+    environment:
+      - VITE_LIVE2D_MODEL_PATH=${VITE_LIVE2D_MODEL_PATH} 
+      - VITE_LIVE2D_MODEL_WIDTH=${VITE_LIVE2D_MODEL_WIDTH}
+      - VITE_LIVE2D_MODEL_HEIGHT=${VITE_LIVE2D_MODEL_HEIGHT}
+      - VITE_LIVE2D_MODEL_MOBILE_WIDTH=${VITE_LIVE2D_MODEL_MOBILE_WIDTH}
+      - VITE_LIVE2D_MODEL_MOBILE_HEIGHT=${VITE_LIVE2D_MODEL_MOBILE_HEIGHT}
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    depends_on:
+      - backend 
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000" # 将主机 5000 端口映射到容器的 5000 端口 (Flask/Gunicorn 默认端口)
+    volumes:
+      - ./backend:/app
+      - ./backend/instance:/app/instance 
+    environment:
+      - PYTHONUNBUFFERED=1 
+
+    command: >
+      sh -c " \
+      flask db upgrade && \
+      FLASK_APP=run.py flask init-metrics && \
+      gunicorn -w 4 -b 0.0.0.0:5000 --log-file - --error-logfile - \"run:create_app()\" \
+      "
