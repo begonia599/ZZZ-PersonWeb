@@ -1,3 +1,4 @@
 # filepath: .gitignore
 venv/
 .env
+backend/firebase-service-account.json
