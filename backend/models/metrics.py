@@ -1,5 +1,5 @@
 # backend/models/metrics.py
-from run import db
+from database import db
 from datetime import datetime # 确保 datetime 已导入
 
 class WebsiteMetrics(db.Model):

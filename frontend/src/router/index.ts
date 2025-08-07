@@ -6,6 +6,7 @@ import ArticleEditorPage from '../views/ArticleEditorPage.vue';
 // 导入其他页面组件的占位符
 import ToolboxPage from '../views/ToolboxPage.vue';
 import DrivePage from '../views/DrivePage.vue'
+import DriveAddPage from '../views/DriveAddPage.vue'
 // import AboutMePage from '../components/AboutMePage.vue';
 // import ContactPage from '../components/ContactPage.vue';
 
@@ -36,11 +37,16 @@ const routes = [
     name: 'Toolbox',
     component: ToolboxPage,
   },
-    {
-      path: '/toolbox/drive',
-      name: 'drive',
-      component: DrivePage
-    },
+  {
+    path: '/toolbox/drive',
+    name: 'Drive',
+    component: DrivePage
+  },
+  {
+    path: '/toolbox/drive/add',
+    name: 'DriveAdd',
+    component: DriveAddPage
+  },
   {
     path: '/about',
     name: 'About',

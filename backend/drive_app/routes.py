@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from run import db
+from database import db  # 改为从 database.py 导入
 from models.set_type import SetType
 from models.stat_type import StatType
 from models.drive_piece import DrivePiece, DrivePieceSubstat
@@ -82,8 +82,6 @@ def add_drive_piece():
 
     except Exception as e:
         db.session.rollback()
-        # 记录详细的错误信息到日志，方便调试
-        print(f"Error adding drive piece: {e}")
         return jsonify({"error": "添加驱动盘数据失败", "details": str(e)}), 500
 
 
@@ -125,5 +123,28 @@ def get_drive_pieces():
     except Exception as e:
         # 在出现异常时回滚会话，并返回错误信息
         db.session.rollback()
-        print(f"Error getting drive pieces: {e}")
         return jsonify({'error': '获取驱动盘数据失败', 'details': str(e)}), 500
+
+@drive_bp.route('/set-types', methods=['GET'])
+def get_set_types():
+    """
+    获取所有套装类型列表
+    """
+    try:
+        set_types = SetType.query.all()
+        result = [set_type.set_name for set_type in set_types]
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': '获取套装数据失败', 'details': str(e)}), 500
+
+@drive_bp.route('/stat-types', methods=['GET'])
+def get_stat_types():
+    """
+    获取所有词条类型列表
+    """
+    try:
+        stat_types = StatType.query.all()
+        result = [stat_type.stat_name for stat_type in stat_types]
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': '获取词条数据失败', 'details': str(e)}), 500

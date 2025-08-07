@@ -1,5 +1,5 @@
 # backend/models/stat_type.py
-from run import db # 从 run 导入新的数据库实例
+from database import db # 从 run 导入新的数据库实例
 from datetime import datetime
 
 class StatType(db.Model):

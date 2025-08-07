@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, current_app, request
 from datetime import datetime
 import time
 
-# 导入 db 实例和新的 WebsiteMetrics 模型
-from run import db # 确保这里导入的是在 run.py 中初始化过的 db 实例
+# 修改：从独立的 database 文件导入 db
+from database import db  # 改为从 database.py 导入
 from models.metrics import WebsiteMetrics
 
 metrics_bp = Blueprint('metrics', __name__, url_prefix='/api/metrics')

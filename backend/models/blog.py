@@ -1,6 +1,6 @@
 # models/blog.py
-# **关键修改：从 run 模块导入 db 实例**
-from run import db 
+# **关键修改：从独立文件导入 db 实例**
+from database import db  
 
 class Post(db.Model):
     """

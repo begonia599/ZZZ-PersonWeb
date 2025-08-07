@@ -1,5 +1,5 @@
 # backend/models/drive_piece.py
-from run import db # 从 run 导入新的数据库实例
+from database import db # 从 run 导入新的数据库实例
 from datetime import datetime
 # 导入相关联的模型 (StatType, SetType)
 # 确保 StatType 和 SetType 也在 drive_stats_db 上下文中

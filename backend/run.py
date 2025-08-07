@@ -2,7 +2,7 @@
 import os
 import json
 from flask import Flask, current_app
-from flask_sqlalchemy import SQLAlchemy
+from database import db  # 从独立文件导入
 from flask_migrate import Migrate
 from flask_cors import CORS
 from datetime import datetime
@@ -11,7 +11,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-db = SQLAlchemy()
 migrate = Migrate()
 
 def create_app():
@@ -37,6 +36,7 @@ def create_app():
 
     app.logger.info("Firebase Admin SDK 未使用。指标将本地存储。")
 
+    # 注册蓝图
     from blog_app.routes import blog_bp
     from metrics_app.routes import metrics_bp
     from drive_app.routes import drive_bp
@@ -45,15 +45,33 @@ def create_app():
     app.register_blueprint(metrics_bp)
     app.register_blueprint(drive_bp)
 
+    # 注册CLI命令
     app.cli.add_command(init_metrics_command)
-    app.cli.add_command(check_db_tables_command) 
+    app.cli.add_command(check_db_tables_command)
+
+    # 创建表的函数
+    def create_tables():
+        """创建所有数据库表"""
+        try:
+            db.create_all()
+            db.create_all(bind_key='blog_db')
+            db.create_all(bind_key='drive_stats')
+            app.logger.info("数据库表创建完成")
+        except Exception as e:
+            app.logger.error(f"创建数据库表时出错: {e}")
+
+    # 替代 before_first_request 的方法：在应用上下文中直接创建表
+    with app.app_context():
+        create_tables()
 
     return app
 
 @click.command('init-metrics')
-def init_metrics_command():
+@click.pass_context
+def init_metrics_command(ctx):
     """初始化数据库中的网站指标。"""
-    with current_app.app_context():
+    app = ctx.find_root().obj or current_app
+    with app.app_context():
         from models.metrics import WebsiteMetrics
         try:
             metrics_row = WebsiteMetrics.query.get(1)
@@ -70,9 +88,11 @@ def init_metrics_command():
 
 @click.command('check-db-tables')
 @click.argument('db_name', default='all')
-def check_db_tables_command(db_name):
+@click.pass_context
+def check_db_tables_command(ctx, db_name):
     """检查数据库中是否存在预期的表。"""
-    with current_app.app_context():
+    app = ctx.find_root().obj or current_app
+    with app.app_context():
         from models.blog import Post
         from models.metrics import WebsiteMetrics
         from models.stat_type import StatType
@@ -113,6 +133,8 @@ def check_db_tables_command(db_name):
             except Exception as e:
                 print(f"  ❌ 无法连接或检查 drive_stats.db: {e}")
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
+    # 直接运行python run.py时使用
     app.run(debug=True, port=5000)
