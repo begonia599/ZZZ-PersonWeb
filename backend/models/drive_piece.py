@@ -1,52 +1,46 @@
 # backend/models/drive_piece.py
-from database import db # 从 run 导入新的数据库实例
+from database import db
 from datetime import datetime
-# 导入相关联的模型 (StatType, SetType)
-# 确保 StatType 和 SetType 也在 drive_stats_db 上下文中
-# 它们会通过 from models import stat_type, set_type 被 run.py 导入
-# 所以这里无需再次导入 db.Model 依赖
-from .stat_type import StatType # 如果 stat_type.py 在同一目录且需要显式导入
-from .set_type import SetType   # 如果 set_type.py 在同一目录且需要显式导入
+from sqlalchemy.dialects.postgresql import JSON  # 如果使用 PostgreSQL，可以直接使用 JSON 类型
 
 class DrivePiece(db.Model):
-    __bind_key__ = 'drive_stats' # 指定使用哪个数据库连接
-    __tablename__ = 'drive_pieces' # 定义表名
+    __bind_key__ = 'drive_stats'
+    __tablename__ = 'drive_pieces'
 
     drive_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     set_id = db.Column(db.Integer, db.ForeignKey('set_types.set_id'), nullable=False)
     position = db.Column(db.Integer, nullable=False)
     main_stat_id = db.Column(db.Integer, db.ForeignKey('stat_types.stat_type_id'), nullable=False)
+    main_stat_level = db.Column(db.Integer, default=15)  # 主词条等级，默认15
+    total_upgrades = db.Column(db.Integer, default=0)  # 强化点数
+    substats = db.Column(db.JSON)  # 以JSON格式存储副词条列表
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 定义关系，通过 set_id 和 main_stat_id 关联到 SetType 和 StatType
+    # 关系定义
     set_type = db.relationship('SetType', backref=db.backref('drive_pieces', lazy=True))
-    main_stat_type = db.relationship('StatType', backref=db.backref('main_drive_pieces', lazy=True))
-
-    # CHECK 约束: position BETWEEN 1 AND 6
-    __table_args__ = (
-        db.CheckConstraint('position >= 1 AND position <= 6', name='position_check'),
-    )
-
+    main_stat_type = db.relationship('StatType', backref=db.backref('main_stat_pieces', lazy=True))
+    
     def __repr__(self):
-        return f'<DrivePiece {self.drive_id} (Set: {self.set_id}, Pos: {self.position}, MainStat: {self.main_stat_id})>'
+        return f'<DrivePiece {self.drive_id}: {self.position}号位>'
 
-    def to_dict(self, include_substats=False):
-        data = {
+    def to_dict(self):
+        """转换为字典格式，便于JSON序列化"""
+        return {
             'drive_id': self.drive_id,
-            'set_id': self.set_id,
-            'set_name': self.set_type.set_name if self.set_type else None, # 通过关系获取套装名称
+            'set_name': self.set_type.set_name if self.set_type else None,
             'position': self.position,
-            'main_stat_id': self.main_stat_id,
-            'main_stat_name': self.main_stat_type.stat_name if self.main_stat_type else None, # 通过关系获取主词条名称
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'main_stat_name': self.main_stat_type.stat_name if self.main_stat_type else None,
+            'main_stat_level': self.main_stat_level,
+            'total_upgrades': self.total_upgrades,
+            'substats': self.substats or [],
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-        if include_substats:
-            # 加载副词条，并通过它们的 to_dict 方法序列化
-            data['substats'] = [sub.to_dict() for sub in self.substats] if self.substats else []
-        return data
 
 
 class DrivePieceSubstat(db.Model):
+    """驱动盘副词条关联表"""
     __bind_key__ = 'drive_stats'
     __tablename__ = 'drive_piece_substats'
 
@@ -55,25 +49,24 @@ class DrivePieceSubstat(db.Model):
     stat_id = db.Column(db.Integer, db.ForeignKey('stat_types.stat_type_id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # 定义关系
-    # backref='substats' 会在 DrivePiece 模型上添加一个 'substats' 属性，
-    # 允许我们访问一个驱动盘的所有关联副词条
-    drive_piece = db.relationship('DrivePiece', backref=db.backref('substats', cascade="all, delete-orphan", lazy=True))
-    stat_type = db.relationship('StatType', backref=db.backref('drive_piece_substats', lazy=True))
+    # 关系定义
+    drive_piece = db.relationship('DrivePiece', backref=db.backref('substat_entries', lazy=True, cascade='all, delete-orphan'))
+    stat_type = db.relationship('StatType', backref=db.backref('substat_pieces', lazy=True))
 
-    # UNIQUE KEY (drive_id, stat_id)
+    # 确保同一个驱动盘不会有重复的副词条
     __table_args__ = (
-        db.UniqueConstraint('drive_id', 'stat_id', name='_drive_stat_uc'),
+        db.UniqueConstraint('drive_id', 'stat_id', name='unique_drive_substat'),
     )
 
     def __repr__(self):
-        return f'<DrivePieceSubstat {self.id} (Drive: {self.drive_id}, Stat: {self.stat_id})>'
+        return f'<DrivePieceSubstat {self.id}: Drive {self.drive_id} - Stat {self.stat_id}>'
 
     def to_dict(self):
+        """转换为字典格式"""
         return {
             'id': self.id,
             'drive_id': self.drive_id,
             'stat_id': self.stat_id,
-            'stat_name': self.stat_type.stat_name if self.stat_type else None, # 通过关系获取词条名称
+            'stat_name': self.stat_type.stat_name if self.stat_type else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

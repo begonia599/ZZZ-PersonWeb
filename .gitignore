@@ -2,3 +2,6 @@
 venv/
 .env
 backend/firebase-service-account.json
+
+# 个人笔记和文档
+驱动盘准则.md

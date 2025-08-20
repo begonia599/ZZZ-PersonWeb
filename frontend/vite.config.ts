@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        // 检查是否在Docker环境中（通过检查backend主机是否可解析）
+        target: process.env.DOCKER_ENV === 'true' ? 'http://backend:5000' : 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       }

@@ -1,19 +1,18 @@
 # backend/models/set_type.py
-from database import db # 从 run 导入新的数据库实例
-from datetime import datetime
+from database import db
 
 class SetType(db.Model):
-    __bind_key__ = 'drive_stats' # 指定使用哪个数据库连接
-    __tablename__ = 'set_types' # 定义表名
+    __bind_key__ = 'drive_stats'
+    __tablename__ = 'set_types'
 
     set_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    set_name = db.Column(db.String(100), nullable=False, unique=True)
-    two_piece_effect = db.Column(db.Text, nullable=True)
-    four_piece_effect = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    set_name = db.Column(db.String(50), nullable=False, unique=True)
+    two_piece_effect = db.Column(db.Text)  # 二件套效果
+    four_piece_effect = db.Column(db.Text)  # 四件套效果
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     def __repr__(self):
-        return f'<SetType {self.set_name}>'
+        return f'<SetType {self.set_id}: {self.set_name}>'
 
     def to_dict(self):
         return {

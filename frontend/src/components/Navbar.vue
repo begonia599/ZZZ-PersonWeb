@@ -3,7 +3,7 @@
     <ul>
       <li><router-link to="/" class="nav-item">主页</router-link></li>
       <li><router-link to="/toolbox" class="nav-item">工具箱</router-link></li>
-      <li><router-link to="/blog" class="nav-item">海棠旅记</router-link></li>
+      <li><router-link to="/blog" class="nav-item">博客</router-link></li>
       <li><router-link to="/about" class="nav-item">关于我</router-link></li>
       <li><router-link to="/contact" class="nav-item">联系</router-link></li>
     </ul>

@@ -11,71 +11,72 @@
     <div class="form-section">
       <form @submit.prevent="addDrivePiece" class="drive-form">
         <div class="form-row">
-          <div class="form-group">
-            <label>套装名称</label>
-            <select v-model="form.set_name" required>
-              <option value="">请选择套装</option>
-              <option v-for="setName in setTypes" :key="setName" :value="setName">
-                {{ setName }}
-              </option>
-            </select>
-          </div>
+          <!-- 套装选择 -->
+          <FormSelect
+            v-model="form.set_name"
+            label="套装名称"
+            placeholder="请选择套装"
+            :options="setTypes"
+            :required="true"
+          />
           
-          <div class="form-group">
-            <label>位置</label>
-            <select v-model.number="form.position" required>
-              <option value="">请选择位置</option>
-              <option value="1">1号位</option>
-              <option value="2">2号位</option>
-              <option value="3">3号位</option>
-              <option value="4">4号位</option>
-              <option value="5">5号位</option>
-              <option value="6">6号位</option>
-            </select>
-          </div>
+          <!-- 位置选择 -->
+          <FormSelect
+            v-model="form.position"
+            label="位置"
+            :options="positionOptions"
+            :required="true"
+            @change="onPositionChange"
+          />
           
-          <div class="form-group">
-            <label>主词条</label>
-            <select v-model="form.main_stat_name" required>
-              <option value="">请选择主词条</option>
-              <option v-for="statName in statTypes" :key="statName" :value="statName">
-                {{ statName }}
-              </option>
-            </select>
-          </div>
+          <!-- 主词条选择 -->
+          <FormSelect
+            v-model="form.main_stat_name"
+            label="主词条"
+            placeholder="请选择主词条"
+            :options="availableMainStats"
+            :required="true"
+            :readonly="availableMainStats.length === 1"
+            :hint="getPositionHint()"
+            @change="onMainStatChange"
+          />
         </div>
         
-        <div class="form-group">
-          <label>副词条 (最多4个)</label>
-          <div class="substats-container">
-            <div v-for="(substat, index) in form.substats" :key="index" class="substat-item">
-              <select v-model="form.substats[index]">
-                <option value="">请选择副词条</option>
-                <option v-for="statName in statTypes" :key="statName" :value="statName">
-                  {{ statName }}
-                </option>
-              </select>
-              <button type="button" @click="removeSubstat(index)" class="remove-btn">×</button>
-            </div>
-            <button v-if="form.substats.length < 4" type="button" @click="addSubstat" class="add-substat-btn">
-              + 添加副词条
-            </button>
-          </div>
+        <!-- 副词条选择区域 -->
+        <SubstatsSelector
+          v-if="form.main_stat_name"
+          v-model="form.substats"
+          :all-options="ALL_SUBSTATS"
+          :exclude-options="[form.main_stat_name]"
+          :min-count="3"
+          :max-count="4"
+        />
+
+        <!-- 选择提示 -->
+        <div v-if="!form.main_stat_name" class="selection-hint">
+          <p>💡 请先选择驱动盘位置，主词条将根据位置自动设置或供您选择</p>
         </div>
         
-        <div class="form-actions">
-          <button type="submit" :disabled="isSubmitting || isLoading" class="submit-btn">
-            {{ isSubmitting ? '添加中...' : '添加驱动盘' }}
-          </button>
-          <button type="button" @click="resetForm" class="reset-btn">重置</button>
-        </div>
+        <!-- 操作按钮 -->
+        <ActionButtons
+          :submit-disabled="isSubmitting || isLoading || !isFormValid"
+          :submit-loading="isSubmitting"
+          submit-text="添加驱动盘"
+          submit-loading-text="添加中..."
+          reset-text="重置"
+          @submit="addDrivePiece"
+          @reset="resetForm"
+        />
       </form>
     </div>
 
     <!-- 消息提示 -->
-    <div v-if="message.text" :class="['message', message.type]">
-      {{ message.text }}
-    </div>
+    <MessageToast
+      :message="message.text"
+      :type="message.type"
+      :show="!!message.text"
+      @close="clearMessage"
+    />
 
     <!-- 加载状态 -->
     <div v-if="isLoading" class="loading-overlay">
@@ -86,63 +87,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import LoadingAnimation from '../components/LoadingAnimation.vue';
+import { useDriveForm } from '../composables/useDriveForm';
+import { useMessage } from '../composables/useMessage';
 
-interface DriveForm {
-  set_name: string;
-  position: number | string;
-  main_stat_name: string;
-  substats: string[];
-}
+// 组件导入
+import LoadingAnimation from '../components/LoadingAnimation.vue';
+import FormSelect from '../components/FormSelect.vue';
+import SubstatsSelector from '../components/SubstatsSelector.vue';
+import MessageToast from '../components/MessageToast.vue';
+import ActionButtons from '../components/ActionButtons.vue';
 
 const router = useRouter();
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const setTypes = ref<string[]>([]);
 const statTypes = ref<string[]>([]);
-const message = ref({ text: '', type: '' });
 
-const form = ref<DriveForm>({
-  set_name: '',
-  position: '',
-  main_stat_name: '',
-  substats: ['']
-});
+// 使用组合式函数
+const { message, showMessage, clearMessage } = useMessage();
+const { 
+  form, 
+  POSITION_MAIN_STATS, 
+  ALL_SUBSTATS, 
+  availableMainStats,
+  isFormValid,
+  resetForm,
+  onPositionChange,
+  onMainStatChange,
+  getPositionHint
+} = useDriveForm();
 
-// 添加副词条
-const addSubstat = () => {
-  if (form.value.substats.length < 4) {
-    form.value.substats.push('');
-  }
-};
-
-// 移除副词条
-const removeSubstat = (index: number) => {
-  form.value.substats.splice(index, 1);
-  if (form.value.substats.length === 0) {
-    form.value.substats.push('');
-  }
-};
-
-// 重置表单
-const resetForm = () => {
-  form.value = {
-    set_name: '',
-    position: '',
-    main_stat_name: '',
-    substats: ['']
-  };
-};
-
-// 显示消息
-const showMessage = (text: string, type: 'success' | 'error' = 'success') => {
-  message.value = { text, type };
-  setTimeout(() => {
-    message.value = { text: '', type: '' };
-  }, 3000);
-};
+// 位置选项
+const positionOptions = [
+  { label: '1号位', value: 1 },
+  { label: '2号位', value: 2 },
+  { label: '3号位', value: 3 },
+  { label: '4号位', value: 4 },
+  { label: '5号位', value: 5 },
+  { label: '6号位', value: 6 }
+];
 
 // 加载套装类型
 const loadSetTypes = async () => {
@@ -178,6 +163,11 @@ const loadStatTypes = async () => {
 
 // 添加驱动盘
 const addDrivePiece = async () => {
+  if (!isFormValid.value) {
+    showMessage('请完整填写表单信息并选择3-4个副词条', 'error');
+    return;
+  }
+
   isSubmitting.value = true;
   try {
     // 过滤掉空的副词条
@@ -232,9 +222,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 只保留页面级别的样式 */
 .drive-add-page {
   padding: 20px;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   min-height: calc(100vh - 40px);
   position: relative;
@@ -248,172 +239,73 @@ onMounted(async () => {
 }
 
 .header-section h1 {
-  color: #333;
+  color: #fff;
   margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-weight: bold;
 }
 
 .back-btn {
-  background: #6c757d;
+  background: rgba(108, 117, 125, 0.8);
+  backdrop-filter: blur(10px);
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
   text-decoration: none;
   font-size: 14px;
-  transition: background-color 0.3s;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
 }
 
 .back-btn:hover {
-  background: #545b62;
+  background: rgba(84, 91, 98, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
 }
 
-/* 表单区域样式 */
 .form-section {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.drive-form {
-  max-width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 35px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
+.selection-hint {
+  background: rgba(23, 162, 184, 0.1);
+  border: 1px solid rgba(23, 162, 184, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
 }
 
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.form-group select {
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+.selection-hint p {
+  color: #17a2b8;
+  margin: 0;
   font-size: 14px;
-  transition: border-color 0.3s;
-  background: white;
+  font-weight: 500;
 }
 
-.form-group select:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.substats-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.substat-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.substat-item select {
-  flex: 1;
-}
-
-.remove-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  cursor: pointer;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s;
-}
-
-.remove-btn:hover {
-  background: #c82333;
-}
-
-.add-substat-btn {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  align-self: flex-start;
-  transition: background-color 0.3s;
-}
-
-.add-substat-btn:hover {
-  background: #218838;
-}
-
-.form-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 30px;
-}
-
-.submit-btn,
-.reset-btn {
-  padding: 15px 40px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: white;
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
-
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-}
-
-.submit-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.reset-btn {
-  background: #6c757d;
-  color: white;
-}
-
-.reset-btn:hover {
-  background: #545b62;
-  transform: translateY(-1px);
-}
-
-/* 加载状态样式 */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -422,47 +314,20 @@ onMounted(async () => {
 }
 
 .loading-text {
-  margin-top: 15px;
-  font-size: 1.1em;
-  color: #555;
-}
-
-/* 消息提示样式 */
-.message {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 20px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
-
-.message.success {
-  background: #28a745;
-}
-
-.message.error {
-  background: #dc3545;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  margin-top: 20px;
+  font-size: 1.2em;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .drive-add-page {
     padding: 15px;
+  }
+  
+  .form-section {
+    padding: 25px;
   }
   
   .header-section {
@@ -473,15 +338,7 @@ onMounted(async () => {
   
   .form-row {
     grid-template-columns: 1fr;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .submit-btn,
-  .reset-btn {
-    width: 100%;
+    gap: 20px;
   }
 }
 </style>

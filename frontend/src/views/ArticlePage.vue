@@ -22,7 +22,7 @@
         </div>
       </div>
     </div>
-    <router-link to="/blog" class="back-to-blog-btn">返回海棠旅记</router-link>
+    <router-link to="/blog" class="back-to-blog-btn">返回博客</router-link>
   </div>
 </template>
 

@@ -12,7 +12,8 @@ from models.upgrade_record import UpgradeRecord
 
 def initialize_database():
     """
-    初始化 drive_stats.db 数据库，创建所有表并插入初始套装和词条数据。
+    初始化 drive_stats.db 数据库，创建所有表结构。
+    不插入任何初始数据，用户可以自行导入数据。
     """
     # 创建一个 Flask 应用实例
     app = create_app()
@@ -23,52 +24,35 @@ def initialize_database():
             # 确保实例文件夹存在
             os.makedirs(app.instance_path, exist_ok=True)
             
+            print("正在删除旧的数据库表（如果存在）...")
+            # 删除所有表（重新开始）
+            db.drop_all(bind_key='drive_stats')
+            
+            print("正在创建新的数据库表...")
             # 创建所有数据库表
-            db.create_all()
+            db.create_all(bind_key='drive_stats')
             print("所有数据库表已创建。")
-
-            # 检查 set_types 表是否为空，避免重复插入
-            if SetType.query.count() == 0:
-                print("正在插入初始套装和词条数据...")
+            
+            # 检查表创建情况
+            print("\n检查创建的表:")
+            inspector = db.inspect(db.get_engine(bind='drive_stats'))
+            tables = inspector.get_table_names()
+            for table in tables:
+                print(f"  ✅ {table}")
                 
-                initial_set_types = [
-                    {'set_name': '空洞驰行', 'two_piece_effect': '攻击力+10%', 'four_piece_effect': '攻击力+20%'},
-                    {'set_name': '电镀音潮', 'two_piece_effect': '雷属性伤害+10%', 'four_piece_effect': '雷属性伤害+20%'},
-                    {'set_name': '虚数织构', 'two_piece_effect': '生命值+10%'},
-                    {'set_name': '物理穿透', 'two_piece_effect': '物理伤害+10%'}
-                ]
-                initial_stat_types = [
-                    {'stat_name': '暴击率'},
-                    {'stat_name': '暴击伤害'},
-                    {'stat_name': '攻击力百分比'},
-                    {'stat_name': '攻击力'},
-                    {'stat_name': '生命值百分比'},
-                    {'stat_name': '生命值'},
-                    {'stat_name': '防御力百分比'},
-                    {'stat_name': '防御力'},
-                    {'stat_name': '效果命中'},
-                    {'stat_name': '效果抵抗'},
-                    {'stat_name': '能量恢复效率'},
-                    {'stat_name': '击破特攻'},
-                    {'stat_name': '火属性伤害'},
-                    {'stat_name': '冰属性伤害'},
-                    {'stat_name': '雷属性伤害'},
-                    {'stat_name': '风属性伤害'},
-                    {'stat_name': '物理伤害'},
-                    {'stat_name': '虚数伤害'},
-                    {'stat_name': '量子伤害'}
-                ]
+                # 显示每个表的列信息
+                columns = inspector.get_columns(table)
+                for col in columns:
+                    nullable = "NULL" if col['nullable'] else "NOT NULL"
+                    print(f"    - {col['name']} ({col['type']}) {nullable}")
+            
+            print(f"\n数据库文件位置: {os.path.join(app.instance_path, 'drive_stats.db')}")
+            print("数据库表结构创建完成，可以开始导入您的数据了。")
                 
-                db.session.bulk_insert_mappings(SetType, initial_set_types)
-                db.session.bulk_insert_mappings(StatType, initial_stat_types)
-                db.session.commit()
-                print("初始套装和词条数据已成功插入到 drive_stats.db。")
-            else:
-                print("drive_stats.db 中的套装和词条数据已存在，跳过初始化。")
-
         except Exception as e:
             db.session.rollback()
             print(f"初始化数据库时发生错误: {e}")
-            
+            raise e
+
 if __name__ == '__main__':
     initialize_database()

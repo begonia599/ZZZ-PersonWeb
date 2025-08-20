@@ -1,6 +1,6 @@
 <template>
   <div class="blog-page-container">
-    <h2 class="page-title">海棠旅记</h2>
+    <h2 class="page-title">博客</h2>
     <div class="write-article-section">
       <router-link to="/blog/new" class="write-article-btn">
         书写新文章

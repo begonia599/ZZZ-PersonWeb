@@ -7,6 +7,8 @@ import ArticleEditorPage from '../views/ArticleEditorPage.vue';
 import ToolboxPage from '../views/ToolboxPage.vue';
 import DrivePage from '../views/DrivePage.vue'
 import DriveAddPage from '../views/DriveAddPage.vue'
+import DriveStatsPage from '../views/DriveStatsPage.vue';
+import DriveEditPage from '../views/DriveEditPage.vue';
 // import AboutMePage from '../components/AboutMePage.vue';
 // import ContactPage from '../components/ContactPage.vue';
 
@@ -41,6 +43,16 @@ const routes = [
     path: '/toolbox/drive',
     name: 'Drive',
     component: DrivePage
+  },
+  {
+    path: '/toolbox/drive/edit/:id',
+    name: 'DriveEdit',
+    component: DriveEditPage
+  },
+  {
+    path: '/toolbox/drive/stats',
+    name: 'DriveStats',
+    component: DriveStatsPage
   },
   {
     path: '/toolbox/drive/add',
