@@ -540,6 +540,7 @@ h2 {
 @media (max-width: 768px) {
   .drive-page {
     padding: 15px;
+    padding-top: 100px; /* 适应移动端导航栏高度 */
   }
   
   .drive-grid {
@@ -569,6 +570,37 @@ h2 {
     width: 100%;
     max-width: 300px;
     text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .drive-page {
+    padding: 10px;
+    padding-top: 120px;
+  }
+  
+  h1 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+  }
+  
+  .action-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .drive-list-section {
+    padding: 15px;
+  }
+  
+  .load-more-btn,
+  .collapse-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .showing-info {
+    font-size: 12px;
   }
 }
 </style>

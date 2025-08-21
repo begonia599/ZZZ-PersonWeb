@@ -225,14 +225,57 @@ watch(() => route.params.id, (newId) => {
 
 @media (max-width: 768px) {
   .article-page-container {
-    width: 90%;
+    width: 95%;
     padding: 20px;
+    padding-top: 100px; /* 适应移动端导航栏高度 */
   }
   .article-title {
     font-size: 2em;
+    margin-bottom: 15px;
+  }
+  .article-meta {
+    font-size: 0.9em;
+    margin-bottom: 20px;
   }
   .article-content, .article-excerpt {
     font-size: 1em;
+    line-height: 1.6;
+  }
+  .article-cover-image {
+    max-height: 250px;
+    margin-bottom: 20px;
+  }
+  .back-to-blog-btn {
+    padding: 8px 16px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-page-container {
+    width: 98%;
+    padding: 15px;
+    padding-top: 120px;
+  }
+  .article-title {
+    font-size: 1.8em;
+    margin-bottom: 12px;
+  }
+  .article-meta {
+    font-size: 0.8em;
+    margin-bottom: 15px;
+  }
+  .article-content, .article-excerpt {
+    font-size: 0.95em;
+    line-height: 1.5;
+  }
+  .article-cover-image {
+    max-height: 200px;
+    margin-bottom: 15px;
+  }
+  .back-to-blog-btn {
+    padding: 6px 14px;
+    font-size: 0.85em;
   }
 }
 </style>

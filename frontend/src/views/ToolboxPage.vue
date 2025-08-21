@@ -110,11 +110,38 @@ h1 {
   justify-items: center; /* 在网格中居中项目 */
 }
 
-/* 响应式调整：复制 drive.css 中 .drive-grid 的媒体查询 */
+/* 响应式调整：移动端优化 */
 @media (max-width: 768px) {
+  .toolbox-page {
+    padding: 15px;
+    padding-top: 100px; /* 适应移动端导航栏高度 */
+  }
+  
+  h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #fff; /* 移动端使用白色文字 */
+  }
+  
   .tool-list {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* 移动端宽度控制 */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 移动端宽度控制 */
     gap: 15px; /* 移动端卡片间距 */
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbox-page {
+    padding: 10px;
+    padding-top: 120px;
+  }
+  
+  h1 {
+    font-size: 1.8em;
+  }
+  
+  .tool-list {
+    grid-template-columns: 1fr; /* 小屏幕单列布局 */
+    gap: 12px;
   }
 }
 

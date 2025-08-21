@@ -26,8 +26,6 @@ import Live2DCanvas from '../components/Live2DModel.vue'; // 确保路径正确�
 // 注意：live2dModelPath 变量已移除，因为 Live2DCanvas 组件通过 modelId 构造路径
 const live2dModelWidth = parseInt(import.meta.env.VITE_LIVE2D_MODEL_WIDTH || '400');
 const live2dModelHeight = parseInt(import.meta.env.VITE_LIVE2D_MODEL_HEIGHT || '500');
-const live2dModelMobileWidth = parseInt(import.meta.env.VITE_LIVE2D_MODEL_MOBILE_WIDTH || '250');
-const live2dModelMobileHeight = parseInt(import.meta.env.VITE_LIVE2D_MODEL_MOBILE_HEIGHT || '300');
 
 // 定义 Live2D 模型相关的类型接口，与 Live2DModel.vue 中保持一致
 interface IL2DModel {
@@ -93,15 +91,36 @@ onBeforeUnmount(() => {
 /* 响应式调整 */
 @media (max-width: 768px) {
   .home-page-container {
-    padding-top: 70px;
+    padding-top: 100px; /* 适应移动端导航栏高度 */
+    padding-left: 15px;
+    padding-right: 15px;
     width: 100%;
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 100px);
   }
   .welcome-title {
     font-size: 2.5em;
+    margin-bottom: 15px;
   }
   .welcome-text {
     font-size: 1.2em;
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page-container {
+    padding-top: 120px;
+    padding-left: 10px;
+    padding-right: 10px;
+    min-height: calc(100vh - 120px);
+  }
+  .welcome-title {
+    font-size: 2em;
+    margin-bottom: 12px;
+  }
+  .welcome-text {
+    font-size: 1.1em;
+    margin-bottom: 25px;
   }
 }
 </style>

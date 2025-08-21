@@ -53,6 +53,30 @@ def create_app():
     app.cli.add_command(init_metrics_command)
     app.cli.add_command(check_db_tables_command)
 
+    # 自动初始化数据库表
+    with app.app_context():
+        try:
+            # 创建所有数据库表
+            db.create_all()
+            app.logger.info("数据库表自动初始化完成")
+            
+            # 检查并记录创建的表
+            from sqlalchemy import inspect
+            
+            # 检查主数据库
+            inspector = inspect(db.engine)
+            main_tables = inspector.get_table_names()
+            app.logger.info(f"主数据库表: {main_tables}")
+            
+            # 检查驱动盘数据库
+            if 'drive_stats' in db.engines:
+                drive_inspector = inspect(db.get_engine(bind='drive_stats'))
+                drive_tables = drive_inspector.get_table_names()
+                app.logger.info(f"驱动盘数据库表: {drive_tables}")
+                
+        except Exception as e:
+            app.logger.error(f"数据库初始化失败: {e}")
+
     # 注释掉自动创建表的代码，避免冲突
     # def create_tables():
     #     """创建所有数据库表"""

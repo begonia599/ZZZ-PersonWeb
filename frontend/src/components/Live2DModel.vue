@@ -20,7 +20,7 @@ interface IL2DModel {
   showHitAreaFrames: () => void;
   hideHitAreaFrames: () => void;
   dispose?: () => void;
-  getExpressions?: () => Array<{ id: string; name?: string; file?: string }>; // 修正为同步返回数组
+  getExpressions?: () => Array<{ id: string; name?: string; file?: string }>;
   expression?: (id: string) => void;
 }
 

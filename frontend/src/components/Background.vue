@@ -72,6 +72,21 @@
   user-select: none;
   pointer-events: none;
 }
+
+/* 移动端响应式设计 */
+@media (max-width: 768px) {
+  .text-line {
+    font-size: 12rem; /* 移动端字体减半 */
+    line-height: 12rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-line {
+    font-size: 8rem; /* 小屏幕进一步减小 */
+    line-height: 8rem;
+  }
+}
 @keyframes slide {
   0% {
     transform: translate(-50%, -50%) rotateZ(-15deg) translateX(25%);

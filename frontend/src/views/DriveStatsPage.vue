@@ -400,14 +400,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+
 import StatsCard from '../components/StatsCard.vue';
 import ChartContainer from '../components/ChartContainer.vue';
 import PieChart from '../components/PieChart.vue';
 import BarChart from '../components/BarChart.vue';
 import LoadingAnimation from '../components/LoadingAnimation.vue';
 
-const router = useRouter();
+
 const loading = ref(true);
 
 // 统计数据

@@ -170,9 +170,66 @@ onMounted(() => {
   color: #ff6b6b;
 }
 
+/* 响应式布局优化 */
 @media (max-width: 1400px) {
   .post-grid {
-    columns: 5 200px;
+    columns: 4 200px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .post-grid {
+    columns: 3 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .post-grid {
+    columns: 2 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .blog-page-container {
+    width: 95%;
+    padding-top: 100px; /* 适应移动端导航栏高度 */
+  }
+  
+  .page-title {
+    font-size: 2em;
+    margin-bottom: 20px;
+  }
+  
+  .write-article-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+  }
+  
+  .post-grid {
+    columns: 1 300px; /* 移动端单列布局 */
+    column-gap: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-page-container {
+    width: 98%;
+    padding-top: 120px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .page-title {
+    font-size: 1.8em;
+  }
+  
+  .write-article-btn {
+    padding: 8px 16px;
+    font-size: 0.95em;
+  }
+  
+  .post-grid {
+    columns: 1 280px;
   }
 }
 </style>

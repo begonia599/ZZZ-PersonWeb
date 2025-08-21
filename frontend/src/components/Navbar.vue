@@ -64,4 +64,38 @@ ul {
   transform: none; 
   box-shadow: none;
 }
+
+/* 移动端响应式设计 */
+@media (max-width: 768px) {
+  .navbar {
+    height: 80px; /* 移动端增加高度 */
+    padding: 0 10px;
+  }
+  
+  ul {
+    flex-wrap: wrap; /* 允许换行 */
+    justify-content: center;
+    gap: 10px; /* 减少间距 */
+  }
+  
+  .nav-item {
+    font-size: 14px; /* 移动端字体稍小 */
+    padding: 8px 15px; /* 调整内边距 */
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    height: 100px; /* 小屏幕进一步增加高度 */
+  }
+  
+  ul {
+    gap: 8px; /* 进一步减少间距 */
+  }
+  
+  .nav-item {
+    font-size: 12px; /* 小屏幕字体更小 */
+    padding: 6px 12px;
+  }
+}
 </style>

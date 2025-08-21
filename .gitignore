@@ -5,3 +5,17 @@ backend/firebase-service-account.json
 
 # 个人笔记和文档
 驱动盘准则.md
+
+# Docker镜像文件
+*.tar
+
+# VS Code配置
+.vscode/
+
+# Python缓存文件
+__pycache__/
+*.pyc
+*.pyo
+
+# 数据库文件
+backend/instance/*.db

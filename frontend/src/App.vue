@@ -50,4 +50,17 @@ html, body, #app {
   flex: 1; /* 关键：让它占据所有可用空间并根据内容增长 */
   padding-top: 60px; /* 为导航栏留出空间 */
 }
+
+/* 移动端响应式设计 */
+@media (max-width: 768px) {
+  .main-content-wrapper {
+    padding-top: 80px; /* 移动端导航栏更高 */
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content-wrapper {
+    padding-top: 100px; /* 小屏幕导航栏最高 */
+  }
+}
 </style>
