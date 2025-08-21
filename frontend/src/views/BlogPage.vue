@@ -36,6 +36,7 @@
 import { ref, onMounted } from 'vue';
 import PostCard from '../components/PostCard.vue';
 import LoadingAnimation from '../components/LoadingAnimation.vue';
+import { apiFetch, API_ENDPOINTS } from '@/config/api';
 
 interface Post {
   id: number;
@@ -61,12 +62,8 @@ const fetchPosts = async () => {
   isLoadingPosts.value = true;
   fetchError.value = null;
   try {
-    // **关键修改：将 localhost 替换为 backend 服务名**
-    const response = await fetch('http://localhost:5000/api/posts'); 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data: Post[] = await response.json();
+    // **关键修改：使用统一的 API 配置**
+    const data: Post[] = await apiFetch(API_ENDPOINTS.POSTS); 
     posts.value = data;
   } catch (error: any) {
     console.error('获取文章失败:', error);

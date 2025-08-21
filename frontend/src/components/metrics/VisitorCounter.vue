@@ -14,17 +14,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { apiFetch, API_ENDPOINTS } from '@/config/api';
 
 const visitorCount = ref<number>(0);
-const API_BASE_URL = 'http://localhost:5000/api/metrics'; // 后端 API 地址
 
 const fetchVisitorCount = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/visitor_count`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await apiFetch(API_ENDPOINTS.METRICS.VISITOR_COUNT);
     visitorCount.value = data.visitor_count;
     console.log('访问人数获取成功:', data.visitor_count);
   } catch (error) {
@@ -42,17 +38,10 @@ const incrementVisitorCount = async () => {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/increment_visitor_count`, {
+    const data = await apiFetch(API_ENDPOINTS.METRICS.INCREMENT_VISITOR, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({}), // POST 请求通常需要一个 body，即使是空的
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
     console.log('访问人数增加成功:', data.new_count);
     sessionStorage.setItem(sessionKey, 'true'); // 标记本会话已增加
     // 立即更新显示，避免再次请求

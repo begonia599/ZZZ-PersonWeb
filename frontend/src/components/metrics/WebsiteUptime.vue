@@ -15,9 +15,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
-const API_BASE_URL = 'http://localhost:5000/api/metrics'; // 后端 API 地址
+import { apiFetch, API_ENDPOINTS } from '@/config/api';
 const formattedUptime = ref<string>('加载中...');
-let intervalId: number | null = null;
+let intervalId: NodeJS.Timeout | null = null;
 
 /**
  * 格式化总秒数为“X天 X时 X分 X秒”的字符串。
@@ -59,11 +59,7 @@ const formatUptimeSeconds = (totalSeconds: number): string => {
  */
 const fetchAndDisplayUptime = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/uptime`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await apiFetch(API_ENDPOINTS.METRICS.UPTIME);
     
     // !!! 关键修改: 从后端响应中正确获取 'uptimeSeconds'
     const uptimeSeconds = data.uptimeSeconds; 

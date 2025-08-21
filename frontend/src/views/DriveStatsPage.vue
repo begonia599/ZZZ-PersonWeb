@@ -443,7 +443,7 @@ const positionDistribution = computed(() => {
 
 // 根据位置获取主词条数据（饼图用）
 const getMainStatsByPosition = (position: number) => {
-  const positionData = statsData.value.main_stats[String(position)] || {};
+  const positionData = statsData.value.main_stats[`${position}号位`] || {};
   return Object.entries(positionData).map(([stat, count]) => ({
     label: stat,
     value: count as number
@@ -452,7 +452,7 @@ const getMainStatsByPosition = (position: number) => {
 
 // 根据位置获取主词条排行（详细列表用）
 const getMainStatsRanking = (position: number) => {
-  const positionData = statsData.value.main_stats[String(position)] || {};
+  const positionData = statsData.value.main_stats[`${position}号位`] || {};
   const totalForPosition = Object.values(positionData).reduce((sum, count) => sum + (count as number), 0);
   
   return Object.entries(positionData)
@@ -613,7 +613,7 @@ const generateColor = (str: string): string => {
 // 获取统计数据
 const loadStatsData = async () => {
   try {
-    const response = await fetch('/api/drive/stats/overview');
+    const response = await fetch('/api/drive/stats');
     const result = await response.json();
     
     if (response.ok) {

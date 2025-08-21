@@ -135,19 +135,8 @@
         <ChartContainer
           title="强化管理"
           icon="⚡"
-          :has-controls="true"
           height="auto"
         >
-          <template #controls>
-            <button 
-              class="action-btn upgrade-btn"
-              :disabled="!canUpgrade || isUpgrading"
-              @click="showUpgradeModal = true"
-            >
-              {{ isUpgrading ? '强化中...' : '进行强化' }}
-            </button>
-          </template>
-
           <div class="upgrade-content">
             <!-- 强化进度 -->
             <div class="upgrade-progress-display">
@@ -162,9 +151,29 @@
               </div>
             </div>
 
+            <!-- 3词条新词条选择 -->
+            <div v-if="needNewSubstatSelection" class="new-substat-selection">
+              <h5>选择第4个副词条</h5>
+              <p class="selection-tip">当前为3词条驱动盘，第一次强化将生成第4个副词条（+0等级）</p>
+              <select 
+                v-model="selectedNewSubstat" 
+                class="new-substat-select"
+                :disabled="isUpgrading"
+              >
+                <option value="">请选择新副词条</option>
+                <option 
+                  v-for="stat in getAvailableNewSubstats()" 
+                  :key="stat" 
+                  :value="stat"
+                >
+                  {{ stat }}
+                </option>
+              </select>
+            </div>
+
             <!-- 副词条强化状态 -->
             <div class="substats-upgrade-status">
-              <h5>副词条强化状态</h5>
+              <h5>副词条强化等级</h5>
               <div class="substats-status-list">
                 <div 
                   v-for="(substat, index) in driveData.substats_with_levels" 
@@ -175,11 +184,45 @@
                     'upgraded': substat.upgrade_count > 0 
                   }"
                 >
-                  <span class="substat-name">{{ substat.name }}</span>
-                  <span class="substat-type">
-                    {{ substat.is_original ? '原始' : '新增' }}
-                  </span>
-                  <span class="substat-upgrade-count">+{{ substat.upgrade_count }}</span>
+                  <div class="substat-info">
+                    <span class="substat-name">{{ substat.name }}</span>
+                    <span class="substat-type">
+                      {{ substat.is_original ? '原始' : '新增' }}
+                    </span>
+                  </div>
+                  
+                  <div class="substat-controls">
+                    <span class="substat-level">+{{ substat.upgrade_count }}</span>
+                    <div class="upgrade-buttons">
+                      <button 
+                        class="upgrade-btn-small decrement"
+                        :disabled="substat.upgrade_count <= 0 || isUpgrading"
+                        @click="decrementSubstat(substat)"
+                        title="降级"
+                      >
+                        −
+                      </button>
+                      <button 
+                        class="upgrade-btn-small increment"
+                        :disabled="!canUpgrade || isUpgrading || needNewSubstatSelection"
+                        @click="incrementSubstat(substat)"
+                        :title="needNewSubstatSelection ? '请先选择第4个副词条' : '升级'"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 3词条驱动盘的新词条生成按钮 -->
+                <div v-if="needNewSubstatSelection" class="new-substat-action">
+                  <button 
+                    class="generate-new-substat-btn"
+                    :disabled="!selectedNewSubstat || isUpgrading"
+                    @click="generateNewSubstat"
+                  >
+                    {{ isUpgrading ? '生成中...' : '生成新副词条' }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -211,36 +254,7 @@
       </div>
     </div>
 
-    <!-- 强化选择模态框 -->
-    <div v-if="showUpgradeModal" class="modal-overlay" @click="showUpgradeModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>选择强化词条</h3>
-          <button class="close-btn" @click="showUpgradeModal = false">✕</button>
-        </div>
-        
-        <div class="modal-body">
-          <p class="upgrade-tip">
-            {{ getUpgradeTip() }}
-          </p>
-          
-          <div class="upgrade-options">
-            <div 
-              v-for="(option, index) in getUpgradeOptions()" 
-              :key="index"
-              class="upgrade-option"
-              @click="selectUpgradeOption(option)"
-            >
-              <div class="option-info">
-                <span class="option-name">{{ option.name }}</span>
-                <span class="option-type">{{ option.type }}</span>
-                <span class="option-current">当前 +{{ option.currentLevel }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- 删除确认模态框 -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
@@ -275,7 +289,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import LoadingAnimation from '../components/LoadingAnimation.vue';
 import ChartContainer from '../components/ChartContainer.vue';
@@ -298,12 +312,7 @@ interface DriveData {
   created_at: string;
 }
 
-interface UpgradeOption {
-  name: string;
-  type: 'existing' | 'new';
-  currentLevel: number;
-  substat_id?: number;
-}
+
 
 const router = useRouter();
 const route = useRoute();
@@ -321,13 +330,20 @@ const availableSubstats = ref<string[]>([]);
 const editingMainStat = ref('');
 const editingSubstats = ref<{ name: string }[]>([]);
 
-const showUpgradeModal = ref(false);
 const showDeleteModal = ref(false);
+const selectedNewSubstat = ref('');
 const message = ref({ text: '', type: '' });
 
 // 检查是否可以强化
 const canUpgrade = computed(() => {
   return driveData.value && (driveData.value.total_upgrades || 0) < 5;
+});
+
+// 检查是否需要新副词条选择（3词条驱动盘）
+const needNewSubstatSelection = computed((): boolean => {
+  return !!(driveData.value && 
+         driveData.value.substats_with_levels.length === 3 && 
+         (driveData.value.total_upgrades || 0) === 0);
 });
 
 // 检查词条是否有变化
@@ -342,59 +358,23 @@ const hasStatsChanges = computed(() => {
          JSON.stringify(originalSubstats) !== JSON.stringify(currentSubstats);
 });
 
-// 获取强化提示
-const getUpgradeTip = (): string => {
-  if (!driveData.value) return '';
-  
-  const currentUpgrades = driveData.value.total_upgrades || 0;
-  const substatCount = driveData.value.substats_with_levels.length;
-  
-  if (currentUpgrades === 0 && substatCount === 3) {
-    return '3词条驱动盘的第一次强化必然会生成一个新的副词条（强化等级仍为0）';
-  } else if (substatCount < 4) {
-    return '当前副词条不足4个，强化时会随机选择现有词条或生成新词条';
-  } else {
-    return '选择一个副词条进行强化，强化等级+1';
-  }
-};
-
-// 获取强化选项
-const getUpgradeOptions = (): UpgradeOption[] => {
+// 获取可用的新副词条（排除已有的副词条和主词条）
+const getAvailableNewSubstats = (): string[] => {
   if (!driveData.value) return [];
   
-  const options: UpgradeOption[] = [];
-  const currentUpgrades = driveData.value.total_upgrades || 0;
-  const substats = driveData.value.substats_with_levels;
+  // 根据驱动盘准则定义的副词条
+  const allSubstats = [
+    '生命值', '生命值百分比', '攻击力', '攻击力百分比', 
+    '防御力', '防御力百分比', '暴击率', '暴击伤害', 
+    '穿透率', '异常精通'
+  ];
   
-  if (currentUpgrades === 0 && substats.length === 3) {
-    // 3词条第一次强化必然生成新词条
-    options.push({
-      name: '生成新副词条',
-      type: 'new',
-      currentLevel: 0
-    });
-  } else {
-    // 现有副词条强化选项
-    substats.forEach(substat => {
-      options.push({
-        name: substat.name,
-        type: 'existing',
-        currentLevel: substat.upgrade_count,
-        substat_id: substat.substat_id
-      });
-    });
-    
-    // 如果副词条不足4个，可以生成新词条
-    if (substats.length < 4) {
-      options.push({
-        name: '生成新副词条',
-        type: 'new',
-        currentLevel: 0
-      });
-    }
-  }
+  const usedStats = new Set([
+    driveData.value.main_stat_name,
+    ...driveData.value.substats_with_levels.map(s => s.name)
+  ]);
   
-  return options;
+  return allSubstats.filter(stat => !usedStats.has(stat));
 };
 
 // 获取可用的副词条（排除已选和主词条）
@@ -429,29 +409,88 @@ const onSubstatChange = () => {
   editingSubstats.value = editingSubstats.value.filter(s => s.name);
 };
 
-// 选择强化选项
-const selectUpgradeOption = async (option: UpgradeOption) => {
+// 生成新副词条（3词条驱动盘专用）
+const generateNewSubstat = async () => {
+  if (!selectedNewSubstat.value) return;
+  
   isUpgrading.value = true;
-  showUpgradeModal.value = false;
   
   try {
+    // 直接调用强化API，让后端处理新副词条的生成
     const response = await fetch(`/api/drive/pieces/${driveId}/upgrade`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        upgrade_type: option.type,
-        substat_id: option.substat_id,
-        stat_name: option.type === 'new' ? null : option.name
+        upgrade_type: 'new',
+        new_substat_name: selectedNewSubstat.value
       })
     });
     
     const result = await response.json();
     
     if (response.ok) {
-      showMessage('强化成功！', 'success');
-      await loadDriveData(); // 重新加载数据
+      showMessage('新副词条生成成功！', 'success');
+      selectedNewSubstat.value = '';
+      await loadDriveData();
+    } else {
+      showMessage(result.error || '生成新副词条失败', 'error');
+    }
+  } catch (error) {
+    showMessage('网络错误，请稍后重试', 'error');
+  } finally {
+    isUpgrading.value = false;
+  }
+};
+
+// 增加副词条等级
+const incrementSubstat = async (substat: SubstatWithLevel) => {
+  isUpgrading.value = true;
+  
+  try {
+    const response = await fetch(`/api/drive/pieces/${driveId}/upgrade`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        upgrade_type: 'existing',
+        substat_id: substat.substat_id
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      showMessage(`${substat.name} 强化成功！`, 'success');
+      await loadDriveData();
     } else {
       showMessage(result.error || '强化失败', 'error');
+    }
+  } catch (error) {
+    showMessage('网络错误，请稍后重试', 'error');
+  } finally {
+    isUpgrading.value = false;
+  }
+};
+
+// 降低副词条等级
+const decrementSubstat = async (substat: SubstatWithLevel) => {
+  isUpgrading.value = true;
+  
+  try {
+    const response = await fetch(`/api/drive/pieces/${driveId}/downgrade`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        substat_id: substat.substat_id
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      showMessage(`${substat.name} 降级成功！`, 'success');
+      await loadDriveData();
+    } else {
+      showMessage(result.error || '降级失败', 'error');
     }
   } catch (error) {
     showMessage('网络错误，请稍后重试', 'error');
@@ -906,10 +945,17 @@ onMounted(async () => {
   border-color: rgba(78, 205, 196, 0.3);
 }
 
+.substat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
 .substat-name {
   color: #fff;
   font-weight: 600;
-  flex: 1;
+  font-size: 15px;
 }
 
 .substat-type {
@@ -918,12 +964,138 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 8px;
   border-radius: 12px;
+  width: fit-content;
 }
 
-.substat-upgrade-count {
+.substat-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.substat-level {
   color: #4ECDC4;
   font-weight: 600;
+  font-size: 16px;
+  min-width: 30px;
+  text-align: center;
+}
+
+.upgrade-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.upgrade-btn-small {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upgrade-btn-small.increment {
+  background: linear-gradient(45deg, #4ECDC4, #45B7D1);
+}
+
+.upgrade-btn-small.decrement {
+  background: linear-gradient(45deg, #FF6B6B, #DC3545);
+}
+
+.upgrade-btn-small:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.upgrade-btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.new-substat-selection {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.new-substat-selection h5 {
+  color: #fff;
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.selection-tip {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.new-substat-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
   font-size: 14px;
+  backdrop-filter: blur(5px);
+}
+
+.new-substat-select:focus {
+  outline: none;
+  border-color: #FFC107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
+}
+
+.new-substat-select option {
+  background: rgba(33, 37, 41, 0.95);
+  color: #fff;
+}
+
+.new-substat-action {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.generate-new-substat-btn {
+  padding: 10px 20px;
+  background: linear-gradient(45deg, #FFC107, #FF9F43);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generate-new-substat-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+}
+
+.generate-new-substat-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .danger-content {

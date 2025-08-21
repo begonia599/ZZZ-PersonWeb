@@ -178,7 +178,7 @@ const submitArticle = async () => {
     // **重要提示：目前图片上传只是前端预览，实际生产环境需要将 uploadedFile.value 发送到后端的文件上传API**
     // 后端文件上传API会返回一个可访问的URL，然后将该URL赋值给 article.imageUrl
     // **关键修改：将 localhost 替换为 backend 服务名**
-    const response = await fetch('http://localhost:5000/api/posts', {
+    const response = await fetch('/api/posts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

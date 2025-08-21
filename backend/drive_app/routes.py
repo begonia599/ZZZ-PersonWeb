@@ -182,7 +182,7 @@ def get_drive_piece(drive_id):
         if not drive:
             return jsonify({'error': '驱动盘不存在'}), 404
 
-        # 获取副词条及其强化信息
+        # 获取副词条及其强化信息（使用LEFT JOIN处理没有强化记录的情况）
         substats_query = db.session.query(
             DrivePieceSubstat,
             StatType.stat_name,
@@ -190,7 +190,7 @@ def get_drive_piece(drive_id):
             UpgradeRecord.is_original
         ).join(
             StatType, DrivePieceSubstat.stat_id == StatType.stat_type_id
-        ).join(
+        ).outerjoin(
             UpgradeRecord, DrivePieceSubstat.id == UpgradeRecord.substat_id
         ).filter(
             DrivePieceSubstat.drive_id == drive_id
@@ -200,8 +200,8 @@ def get_drive_piece(drive_id):
         for substat_entry, stat_name, upgrade_count, is_original in substats_query:
             substats_with_levels.append({
                 'name': stat_name,
-                'upgrade_count': upgrade_count,
-                'is_original': is_original,
+                'upgrade_count': upgrade_count if upgrade_count is not None else 0,
+                'is_original': is_original if is_original is not None else True,
                 'substat_id': substat_entry.id
             })
 
@@ -305,6 +305,7 @@ def upgrade_drive_piece(drive_id):
             return jsonify({'error': '该驱动盘已强化满级'}), 400
 
         upgrade_type = data.get('upgrade_type')  # 'existing' 或 'new'
+        new_substat_name = data.get('new_substat_name')  # 指定的新副词条名称
         
         current_substats = DrivePieceSubstat.query.filter_by(drive_id=drive_id).all()
         current_upgrades = drive.total_upgrades
@@ -314,17 +315,29 @@ def upgrade_drive_piece(drive_id):
             if len(current_substats) >= 4:
                 return jsonify({'error': '副词条已满，无法生成新词条'}), 400
 
-            # 获取所有可用的副词条类型（排除主词条和现有副词条）
-            existing_stat_ids = set([drive.main_stat_id] + [s.stat_id for s in current_substats])
-            available_stats = StatType.query.filter(
-                ~StatType.stat_type_id.in_(existing_stat_ids)
-            ).all()
+            # 如果指定了新副词条名称，使用指定的；否则随机选择
+            if new_substat_name:
+                # 验证指定的副词条是否有效
+                new_stat = StatType.query.filter_by(stat_name=new_substat_name).first()
+                if not new_stat:
+                    return jsonify({'error': f'无效的副词条: {new_substat_name}'}), 400
+                
+                # 检查是否与主词条或现有副词条冲突
+                existing_stat_ids = set([drive.main_stat_id] + [s.stat_id for s in current_substats])
+                if new_stat.stat_type_id in existing_stat_ids:
+                    return jsonify({'error': f'副词条 {new_substat_name} 已存在'}), 400
+            else:
+                # 获取所有可用的副词条类型（排除主词条和现有副词条）
+                existing_stat_ids = set([drive.main_stat_id] + [s.stat_id for s in current_substats])
+                available_stats = StatType.query.filter(
+                    ~StatType.stat_type_id.in_(existing_stat_ids)
+                ).all()
 
-            if not available_stats:
-                return jsonify({'error': '没有可用的新副词条'}), 400
+                if not available_stats:
+                    return jsonify({'error': '没有可用的新副词条'}), 400
 
-            # 随机选择一个新副词条
-            new_stat = random.choice(available_stats)
+                # 随机选择一个新副词条
+                new_stat = random.choice(available_stats)
 
             # 创建新的副词条记录
             new_substat_entry = DrivePieceSubstat(
@@ -343,9 +356,20 @@ def upgrade_drive_piece(drive_id):
             )
             db.session.add(upgrade_record)
 
-            # 更新驱动盘JSON数据
-            updated_substats = drive.substats + [new_stat.stat_name]
-            drive.substats = updated_substats
+            # 更新驱动盘JSON数据（如果存在的话）
+            try:
+                current_substats_names = []
+                for substat in current_substats:
+                    stat = StatType.query.get(substat.stat_id)
+                    if stat:
+                        current_substats_names.append(stat.stat_name)
+                
+                updated_substats = current_substats_names + [new_stat.stat_name]
+                drive.substats = updated_substats
+            except Exception as e:
+                # 如果JSON字段更新失败，不影响主要功能
+                print(f"更新JSON字段失败: {e}")
+                pass
 
             upgrade_result = {
                 'type': 'new_substat',
@@ -359,20 +383,32 @@ def upgrade_drive_piece(drive_id):
             if not substat_id:
                 return jsonify({'error': '请选择要强化的副词条'}), 400
 
-            # 查找强化记录
+            # 验证副词条是否存在
+            substat_entry = DrivePieceSubstat.query.get(substat_id)
+            if not substat_entry or substat_entry.drive_id != drive_id:
+                return jsonify({'error': '副词条不存在'}), 400
+
+            # 查找或创建强化记录
             upgrade_record = UpgradeRecord.query.filter_by(
                 drive_id=drive_id,
                 substat_id=substat_id
             ).first()
 
             if not upgrade_record:
-                return jsonify({'error': '找不到对应的强化记录'}), 400
+                # 如果没有强化记录，创建一个新的
+                upgrade_record = UpgradeRecord(
+                    drive_id=drive_id,
+                    substat_id=substat_id,
+                    is_original=True,  # 假设是原始词条
+                    upgrade_count=0
+                )
+                db.session.add(upgrade_record)
+                db.session.flush()  # 确保记录被保存
 
             # 增加强化次数
             upgrade_record.upgrade_count += 1
 
             # 获取副词条名称用于返回
-            substat_entry = DrivePieceSubstat.query.get(substat_id)
             stat_type = StatType.query.get(substat_entry.stat_id)
 
             upgrade_result = {
@@ -398,6 +434,68 @@ def upgrade_drive_piece(drive_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': '强化失败', 'details': str(e)}), 500
+
+@drive_bp.route('/pieces/<int:drive_id>/downgrade', methods=['POST'])
+def downgrade_drive_piece(drive_id):
+    """
+    降低驱动盘副词条等级
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据不能为空'}), 400
+
+        drive = DrivePiece.query.get(drive_id)
+        if not drive:
+            return jsonify({'error': '驱动盘不存在'}), 404
+
+        substat_id = data.get('substat_id')
+        if not substat_id:
+            return jsonify({'error': '请指定要降级的副词条'}), 400
+
+        # 验证副词条是否存在
+        substat_entry = DrivePieceSubstat.query.get(substat_id)
+        if not substat_entry or substat_entry.drive_id != drive_id:
+            return jsonify({'error': '副词条不存在'}), 400
+
+        # 查找强化记录
+        upgrade_record = UpgradeRecord.query.filter_by(
+            drive_id=drive_id,
+            substat_id=substat_id
+        ).first()
+
+        if not upgrade_record:
+            return jsonify({'error': '该副词条还没有进行过强化'}), 400
+
+        # 检查是否可以降级
+        if upgrade_record.upgrade_count <= 0:
+            return jsonify({'error': '该副词条已经是最低等级'}), 400
+
+        # 减少强化次数
+        upgrade_record.upgrade_count -= 1
+        
+        # 减少总强化次数
+        drive.total_upgrades -= 1
+
+        # 获取副词条名称用于返回
+        substat_entry = DrivePieceSubstat.query.get(substat_id)
+        stat_type = StatType.query.get(substat_entry.stat_id)
+
+        db.session.commit()
+
+        return jsonify({
+            'message': '降级成功',
+            'result': {
+                'type': 'downgrade',
+                'substat_name': stat_type.stat_name,
+                'new_upgrade_count': upgrade_record.upgrade_count
+            },
+            'new_total_upgrades': drive.total_upgrades
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': '降级失败', 'details': str(e)}), 500
 
 @drive_bp.route('/pieces/<int:drive_id>', methods=['DELETE'])
 def delete_drive_piece(drive_id):
@@ -505,12 +603,47 @@ def get_drive_stats():
         
         upgrade_distribution = {f"+{upgrade_level}": count for upgrade_level, count in upgrade_stats}
         
+        # 计算前端需要的额外统计数据
+        total_sets = len(set_distribution)
+        total_substats = sum([item['count'] for item in substat_frequency.values()])
+        avg_substats = round(total_substats / total_pieces, 1) if total_pieces > 0 else 0
+        
+        # 按位置分组主词条统计
+        main_stats_by_position = {}
+        for pos in range(1, 7):  # 1-6号位
+            pos_stats = db.session.query(
+                StatType.stat_name,
+                func.count(DrivePiece.drive_id).label('count')
+            ).join(
+                DrivePiece, StatType.stat_type_id == DrivePiece.main_stat_id
+            ).filter(
+                DrivePiece.position == pos
+            ).group_by(StatType.stat_name).all()
+            
+            main_stats_by_position[f"{pos}号位"] = {stat_name: count for stat_name, count in pos_stats}
+        
+        # 副词条数量分布统计
+        substat_count_stats = db.session.query(
+            func.count(DrivePieceSubstat.stat_id).label('substat_count'),
+            func.count(func.distinct(DrivePieceSubstat.drive_id)).label('drive_count')
+        ).group_by(DrivePieceSubstat.drive_id).subquery()
+        
+        substat_count_distribution = db.session.query(
+            substat_count_stats.c.substat_count,
+            func.count(substat_count_stats.c.drive_count).label('count')
+        ).group_by(substat_count_stats.c.substat_count).all()
+        
+        substat_count_dist = {int(substat_count): int(count) for substat_count, count in substat_count_distribution}
+
         return jsonify({
             'total_pieces': total_pieces,
+            'total_sets': total_sets,
+            'avg_substats': avg_substats,
             'position_distribution': position_distribution,
             'set_distribution': set_distribution,
-            'main_stat_distribution': main_stat_distribution,
+            'main_stats': main_stats_by_position,
             'substat_frequency': substat_frequency,
+            'substat_count_distribution': substat_count_dist,
             'upgrade_distribution': upgrade_distribution,
             'last_updated': datetime.utcnow().isoformat()
         }), 200
