@@ -19,3 +19,6 @@ __pycache__/
 
 # 数据库文件
 backend/instance/*.db
+# Ignore Python bytecode files
+__pycache__/
+*.pyc

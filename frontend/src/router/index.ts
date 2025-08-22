@@ -3,6 +3,7 @@ import HomePage from '../views/HomePage.vue';
 import BlogPage from '../views/BlogPage.vue';
 import ArticlePage from '../views/ArticlePage.vue';
 import ArticleEditorPage from '../views/ArticleEditorPage.vue';
+import ArticleEditPage from '../views/ArticleEditPage.vue';
 // 导入其他页面组件的占位符
 import ToolboxPage from '../views/ToolboxPage.vue';
 import DrivePage from '../views/DrivePage.vue'
@@ -33,6 +34,12 @@ const routes = [
     path: '/blog/new', // 用于创建新文章
     name: 'NewArticle',
     component: ArticleEditorPage,
+  },
+  {
+    path: '/blog/edit/:id', // 用于编辑现有文章
+    name: 'EditArticle',
+    component: ArticleEditPage,
+    props: true,
   },
   {
     path: '/toolbox',

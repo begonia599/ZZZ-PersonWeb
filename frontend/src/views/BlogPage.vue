@@ -11,15 +11,18 @@
         <LoadingAnimation />
         </div>
       
-      <div :class="{'post-grid': true, 'loading-fade': isLoadingPosts}">
+      <div ref="postGridRef" :class="{'post-grid': true, 'loading-fade': isLoadingPosts}">
         <PostCard
-          v-for="(post, index) in posts"
+          v-for="(post, index) in sortedPosts"
           :key="post.id || index"
           :id="post.id"
           :title="post.title"
           :excerpt="post.excerpt"
           :image-url="post.imageUrl"
           :views="post.views"
+          :index="index"
+          @refresh="fetchPosts"
+          @delete="handlePostDelete"
         />
         <p v-if="posts.length === 0 && !isLoadingPosts" class="no-posts-message">
           暂无文章，快去书写第一篇吧！
@@ -33,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import PostCard from '../components/PostCard.vue';
 import LoadingAnimation from '../components/LoadingAnimation.vue';
 import { apiFetch, API_ENDPOINTS } from '@/config/api';
@@ -49,20 +52,137 @@ interface Post {
   views: number;
 }
 
-const modules = import.meta.glob('../assets/images/*.{jpg,png,webp}', { eager: true });
-const presetImageUrls: string[] = Object.values(modules).map((module: any) => module.default || module);
-
-console.log('Collected preset image URLs:', presetImageUrls);
-
 const posts = ref<Post[]>([]);
 const isLoadingPosts = ref(true);
 const fetchError = ref<string | null>(null);
+const postGridRef = ref<HTMLElement | null>(null);
+
+// 按时间排序的文章列表 - 从新到旧
+const sortedPosts = computed(() => {
+  return [...posts.value].sort((a, b) => {
+    // 如果有创建时间，按创建时间排序
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    // 否则按ID排序（较新的ID通常较大）
+    return b.id - a.id;
+  });
+});
+
+// 瀑布流布局函数
+const initWaterfallLayout = async () => {
+  await nextTick();
+  if (!postGridRef.value) return;
+
+  const container = postGridRef.value;
+  const items = container.querySelectorAll('.post-card') as NodeListOf<HTMLElement>;
+  
+  if (items.length === 0) return;
+
+  // 获取容器宽度和计算列数
+  const containerWidth = container.offsetWidth - 20; // 减去padding
+  const itemWidth = 280; // 每个卡片的宽度
+  const gap = 20; // 卡片间隙
+  const cols = Math.max(1, Math.floor((containerWidth + gap) / (itemWidth + gap)));
+  
+  if (cols <= 1) {
+    // 单列布局时，重置为正常布局
+    items.forEach(item => {
+      item.style.position = 'static';
+      item.style.left = '';
+      item.style.top = '';
+      item.style.width = 'auto';
+      item.style.maxWidth = '400px';
+      item.style.margin = '0 auto 15px auto';
+      item.style.visibility = 'visible';
+    });
+    container.style.height = 'auto';
+    container.style.transition = 'height 0.3s ease';
+    return;
+  }
+
+  // 初始化每列的高度数组
+  const columnHeights = new Array(cols).fill(0);
+  
+  // 设置容器为relative定位
+  container.style.position = 'relative';
+  
+  // 计算居中偏移
+  const totalWidth = cols * itemWidth + (cols - 1) * gap;
+  const offsetX = Math.max(0, (containerWidth - totalWidth) / 2);
+  
+  // 先重置所有元素样式，等待图片加载
+  items.forEach(item => {
+    item.style.position = 'absolute';
+    item.style.width = `${itemWidth}px`;
+    item.style.visibility = 'hidden'; // 暂时隐藏，等待布局完成
+  });
+
+  // 等待图片加载完成后进行布局
+  const layoutItems = () => {
+    items.forEach((item) => {
+      // 找到最短的列
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      
+      // 计算位置
+      const left = offsetX + shortestColumnIndex * (itemWidth + gap);
+      const top = columnHeights[shortestColumnIndex];
+      
+      // 应用定位
+      item.style.left = `${left}px`;
+      item.style.top = `${top}px`;
+      item.style.visibility = 'visible'; // 显示元素
+      
+      // 更新列高度
+      const itemHeight = item.offsetHeight;
+      columnHeights[shortestColumnIndex] += itemHeight + gap;
+    });
+    
+    // 设置容器高度，确保不小于最小高度
+    const maxHeight = Math.max(...columnHeights);
+    const finalHeight = Math.max(maxHeight, 600); // 至少600px高度
+    container.style.height = `${finalHeight}px`;
+    container.style.transition = 'height 0.3s ease'; // 平滑过渡
+  };
+
+  // 等待所有图片加载完成
+  const images = container.querySelectorAll('img');
+  let loadedImages = 0;
+  const totalImages = images.length;
+
+  if (totalImages === 0) {
+    // 没有图片，直接布局
+    setTimeout(layoutItems, 100);
+  } else {
+    const onImageLoad = () => {
+      loadedImages++;
+      if (loadedImages >= totalImages) {
+        layoutItems();
+      }
+    };
+
+    images.forEach(img => {
+      if (img.complete) {
+        onImageLoad();
+      } else {
+        img.addEventListener('load', onImageLoad);
+        img.addEventListener('error', onImageLoad); // 错误时也继续
+      }
+    });
+
+    // 最大等待时间2秒
+    setTimeout(() => {
+      if (loadedImages < totalImages) {
+        layoutItems();
+      }
+    }, 2000);
+  }
+};
 
 const fetchPosts = async () => {
   isLoadingPosts.value = true;
   fetchError.value = null;
   try {
-    // **关键修改：使用统一的 API 配置**
     const data: Post[] = await apiFetch(API_ENDPOINTS.POSTS); 
     posts.value = data;
   } catch (error: any) {
@@ -70,11 +190,54 @@ const fetchPosts = async () => {
     fetchError.value = error.message || '未知错误';
   } finally {
     isLoadingPosts.value = false;
+    // 数据加载完成且loading结束后初始化瀑布流布局
+    await nextTick();
+    setTimeout(initWaterfallLayout, 500);
   }
+};
+
+// 处理文章删除
+const handlePostDelete = (deletedPostId: number | string) => {
+  posts.value = posts.value.filter(post => post.id !== deletedPostId);
+  // 删除后重新布局
+  setTimeout(initWaterfallLayout, 100);
+};
+
+// 监听窗口大小变化，重新布局
+let resizeTimeout: number | null = null;
+const handleResize = () => {
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+  resizeTimeout = window.setTimeout(initWaterfallLayout, 300);
 };
 
 onMounted(() => {
   fetchPosts();
+  window.addEventListener('resize', handleResize);
+});
+
+// 监听posts变化，重新布局
+watch(() => posts.value.length, () => {
+  if (posts.value.length > 0 && !isLoadingPosts.value) {
+    setTimeout(initWaterfallLayout, 500);
+  }
+});
+
+// 监听loading状态变化
+watch(isLoadingPosts, (newVal) => {
+  if (!newVal && posts.value.length > 0) {
+    setTimeout(initWaterfallLayout, 300);
+  }
+});
+
+// 组件卸载时清理事件监听
+import { onUnmounted } from 'vue';
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
 });
 </script>
 
@@ -148,10 +311,11 @@ onMounted(() => {
 /* 移除了 .loading-text 样式，因为模板中不再有该元素 */
 
 .post-grid {
-  columns: 5 200px;
-  column-gap: 15px;
-  break-inside: avoid-column;
+  position: relative;
+  width: 100%;
   transition: opacity 0.3s ease;
+  padding: 0 10px;
+  min-height: 800px; /* 预留足够的空间防止Footer闪烁 */
 }
 
 .post-grid.loading-fade {
@@ -170,24 +334,7 @@ onMounted(() => {
   color: #ff6b6b;
 }
 
-/* 响应式布局优化 */
-@media (max-width: 1400px) {
-  .post-grid {
-    columns: 4 200px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .post-grid {
-    columns: 3 200px;
-  }
-}
-
-@media (max-width: 900px) {
-  .post-grid {
-    columns: 2 200px;
-  }
-}
+/* 响应式布局现在由JavaScript处理 */
 
 @media (max-width: 768px) {
   .blog-page-container {
@@ -206,8 +353,7 @@ onMounted(() => {
   }
   
   .post-grid {
-    columns: 1 300px; /* 移动端单列布局 */
-    column-gap: 0;
+    /* 移动端布局由JavaScript处理 */
   }
 }
 
@@ -229,7 +375,7 @@ onMounted(() => {
   }
   
   .post-grid {
-    columns: 1 280px;
+    /* 超小屏布局由JavaScript处理 */
   }
 }
 </style>

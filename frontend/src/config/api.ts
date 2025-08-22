@@ -67,6 +67,8 @@ export const API_ENDPOINTS = {
   // 博客相关
   POSTS: '/posts',
   POST_BY_ID: (id: number) => `/posts/${id}`,
+  UPDATE_POST: (id: number) => `/posts/${id}`,
+  DELETE_POST: (id: number) => `/posts/${id}`,
   
   // 指标相关
   METRICS: {
