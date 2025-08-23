@@ -22,3 +22,8 @@ backend/instance/*.db
 # Ignore Python bytecode files
 __pycache__/
 *.pyc
+# 数据库文件
+*.db
+
+# 上传的用户文件（例如你 backend/uploads/）
+/backend/uploads/

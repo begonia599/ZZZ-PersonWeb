@@ -59,6 +59,15 @@ onMounted(() => {
         backgroundUrl: '/tool-icons/zzz-card-bg.jpg',
         buttonText: '开始统计'
       },
+      {
+        id: 2,
+        name: '海棠旅记',
+        description: '记录生活中的美好瞬间，上传照片并按分类整理，让回忆更有序、更珍贵。',
+        path: '/toolbox/travel',
+        logoUrl: '/images/characters/zzjg.jpg',
+        backgroundUrl: '/assets/images/青衣.webp',
+        buttonText: '开始记录'
+      },
       // 可以在这里添加更多工具
     ];
     isLoading.value = false;

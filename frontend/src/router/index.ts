@@ -10,6 +10,9 @@ import DrivePage from '../views/DrivePage.vue'
 import DriveAddPage from '../views/DriveAddPage.vue'
 import DriveStatsPage from '../views/DriveStatsPage.vue';
 import DriveEditPage from '../views/DriveEditPage.vue';
+import TravelPage from '../views/TravelPage.vue';
+import TravelUploadPage from '../views/TravelUploadPage.vue';
+import TravelGalleryPage from '../views/TravelGalleryPage.vue';
 // import AboutMePage from '../components/AboutMePage.vue';
 // import ContactPage from '../components/ContactPage.vue';
 
@@ -67,6 +70,21 @@ const routes = [
     component: DriveAddPage
   },
   {
+    path: '/toolbox/travel',
+    name: 'Travel',
+    component: TravelPage
+  },
+  {
+    path: '/toolbox/travel/upload',
+    name: 'TravelUpload',
+    component: TravelUploadPage
+  },
+  {
+    path: '/toolbox/travel/gallery',
+    name: 'TravelGallery',
+    component: TravelGalleryPage
+  },
+  {
     path: '/about',
     name: 'About',
     component:HomePage,
@@ -81,7 +99,7 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../components/NotFoundPage.vue'), // 懒加载 404 页面
-  },
+  }
 ];
 
 const router = createRouter({
