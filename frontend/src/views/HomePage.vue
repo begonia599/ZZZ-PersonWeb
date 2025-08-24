@@ -3,6 +3,13 @@
     <!-- 你的主页内容 -->
     <h1 class="welcome-title">欢迎来到秋海棠的个人网站</h1>
     <p class="welcome-text">探索我的博客、工具箱和更多内容。</p>
+    
+    <!-- 照片轮播组件 -->
+    <PhotoCarousel />
+    
+    <!-- 名言轮播组件 -->
+    <QuoteDialog />
+    
     <div class="spacer"></div> <!-- 一个撑开空间的 div -->
 
     <!-- 使用 Live2DCanvas 组件 -->
@@ -20,6 +27,8 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue';
 import Live2DCanvas from '../components/Live2DModel.vue'; // 确保路径正确，现在是 Live2DCanvas
+import PhotoCarousel from '../components/PhotoCarousel.vue';
+import QuoteDialog from '../components/QuoteDialog.vue';
 
 // 从环境变量读取 Live2D 模型配置
 // 使用 parseInt 确保宽度和高度是数字类型，并提供默认值以防环境变量未定义

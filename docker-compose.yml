@@ -4,7 +4,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173" # 将主机 5173 端口映射到容器的 5173 端口 (Vite dev server 默认端口)
+      - "5173:5173" 
     volumes:
       - ./frontend:/app 
       - /app/node_modules 
