@@ -12,8 +12,9 @@
     
     <div class="spacer"></div> <!-- 一个撑开空间的 div -->
 
-    <!-- 使用 Live2DCanvas 组件 -->
+    <!-- 使用 Live2DCanvas 组件 - 仅在桌面端显示 -->
     <Live2DCanvas 
+      v-if="!isMobileDevice"
       modelId="furina" 
       :canvasWidth="live2dModelWidth"
       :canvasHeight="live2dModelHeight"
@@ -25,10 +26,23 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import Live2DCanvas from '../components/Live2DModel.vue'; // 确保路径正确，现在是 Live2DCanvas
 import PhotoCarousel from '../components/PhotoCarousel.vue';
 import QuoteDialog from '../components/QuoteDialog.vue';
+
+// 移动设备检测
+const isMobileDevice = ref(false);
+
+// 检测是否为移动设备
+const checkMobileDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileKeywords = ['mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone'];
+  const isMobile = mobileKeywords.some(keyword => userAgent.includes(keyword));
+  const isSmallScreen = window.innerWidth <= 768;
+  
+  isMobileDevice.value = isMobile || isSmallScreen;
+};
 
 // 从环境变量读取 Live2D 模型配置
 // 使用 parseInt 确保宽度和高度是数字类型，并提供默认值以防环境变量未定义
@@ -57,10 +71,19 @@ const handleModelError = (error: any) => {
 
 onMounted(() => {
   console.log("HomePage mounted. Live2DModel component will handle canvas.");
+  
+  // 检测移动设备
+  checkMobileDevice();
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', checkMobileDevice);
 });
 
 onBeforeUnmount(() => {
   console.log("HomePage unmounted.");
+  
+  // 移除事件监听器
+  window.removeEventListener('resize', checkMobileDevice);
 });
 </script>
 

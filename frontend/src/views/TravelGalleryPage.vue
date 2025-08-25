@@ -159,7 +159,8 @@
               :key="page"
               class="page-number"
               :class="{ active: page === currentPage }"
-              @click="goToPage(page)"
+              @click="typeof page === 'number' ? goToPage(page) : undefined"
+              :disabled="typeof page !== 'number'"
             >
               {{ page }}
             </button>
@@ -256,8 +257,12 @@ const filteredPhotos = computed(() => {
   // 排序
   const [field, order] = sortBy.value.split('_');
   result.sort((a, b) => {
-    let aValue = a[field as keyof Photo];
-    let bValue = b[field as keyof Photo];
+    let aValue: any = a[field as keyof Photo];
+    let bValue: any = b[field as keyof Photo];
+    
+    // 处理未定义值
+    if (aValue === undefined || aValue === null) aValue = '';
+    if (bValue === undefined || bValue === null) bValue = '';
     
     if (field === 'created_at') {
       aValue = new Date(aValue as string).getTime();
@@ -827,6 +832,7 @@ h1 {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

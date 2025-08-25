@@ -18,7 +18,14 @@
         <div v-else>
           <img v-if="article.imageUrl" :src="article.imageUrl" alt="文章封面" class="article-cover-image">
           <p class="article-excerpt">{{ article.excerpt }}</p>
-          <div class="full-content">{{ article.content }}</div>
+          <div class="full-content">
+            <!-- 根据内容判断是否使用 Markdown 渲染 -->
+            <MarkdownRenderer 
+              v-if="isMarkdownContent"
+              :content="article.content" 
+            />
+            <div v-else class="plain-text-content">{{ article.content }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -30,6 +37,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import LoadingAnimation from '../components/LoadingAnimation.vue';
+import MarkdownRenderer from '../components/MarkdownRenderer.vue';
 import { apiFetch, API_ENDPOINTS } from '@/config/api';
 
 const route = useRoute();
@@ -67,6 +75,33 @@ const formattedUpdatedAt = computed(() => {
   if (!article.value.updatedAt) return '';
   const date = new Date(article.value.updatedAt);
   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+});
+
+// 智能检测内容是否为 Markdown 格式
+const isMarkdownContent = computed(() => {
+  if (!article.value.content) return false;
+  
+  const content = article.value.content;
+  
+  // 检测常见的 Markdown 语法
+  const markdownPatterns = [
+    /^#{1,6}\s+.+$/m,          // 标题 (# ## ### 等)
+    /\*\*[^*]+\*\*/,           // 粗体 **text**
+    /\*[^*]+\*/,               // 斜体 *text*
+    /`[^`]+`/,                 // 行内代码 `code`
+    /```[\s\S]*?```/,          // 代码块 ```code```
+    /^\s*[-*+]\s+/m,           // 无序列表
+    /^\s*\d+\.\s+/m,           // 有序列表
+    /^\s*>\s+/m,               // 引用块
+    /\[([^\]]*)\]\(([^)]+)\)/, // 链接 [text](url)
+    /!\[([^\]]*)\]\(([^)]+)\)/, // 图片 ![alt](url)
+    /^\s*\|.+\|.+\|/m,         // 表格
+    /^\s*---+\s*$/m,           // 分割线
+    /~~[^~]+~~/,               // 删除线 ~~text~~
+  ];
+  
+  // 如果匹配到任意一个 Markdown 语法模式，就认为是 Markdown 内容
+  return markdownPatterns.some(pattern => pattern.test(content));
 });
 
 const fetchArticle = async (id: string | string[]) => {
@@ -194,8 +229,14 @@ watch(() => route.params.id, (newId) => {
 }
 
 .full-content {
+  word-wrap: break-word;
+}
+
+.plain-text-content {
   white-space: pre-wrap;
   word-wrap: break-word;
+  line-height: 1.8;
+  color: #e0e0e0;
 }
 
 .error-message {

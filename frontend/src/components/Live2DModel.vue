@@ -132,4 +132,18 @@ canvas {
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
   /* border: 2px solid red; 新增红色边框，方便定位 */
 }
+
+/* 移动端完全隐藏Live2D模型 */
+@media (max-width: 768px) {
+  .live2d-container {
+    display: none !important;
+  }
+}
+
+/* 小屏幕设备完全隐藏 */
+@media (max-width: 480px) {
+  .live2d-container {
+    display: none !important;
+  }
+}
 </style>

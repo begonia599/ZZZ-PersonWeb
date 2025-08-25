@@ -55,7 +55,43 @@
       </div>
       <div class="form-group">
         <label for="content">文章内容</label>
-        <textarea id="content" v-model="article.content" rows="15" required placeholder="在这里书写你的文章内容..."></textarea>
+        
+        <!-- 格式选择器 -->
+        <div class="content-format-selector">
+          <button 
+            type="button"
+            :class="['format-btn', { active: contentFormat === 'plain' }]"
+            @click="contentFormat = 'plain'"
+          >
+            纯文本
+          </button>
+          <button 
+            type="button"
+            :class="['format-btn', { active: contentFormat === 'markdown' }]"
+            @click="contentFormat = 'markdown'"
+          >
+            Markdown
+          </button>
+        </div>
+
+        <!-- 纯文本编辑器 -->
+        <textarea 
+          v-if="contentFormat === 'plain'"
+          id="content" 
+          v-model="article.content" 
+          rows="15" 
+          required 
+          placeholder="在这里书写你的文章内容..."
+          class="plain-text-editor"
+        ></textarea>
+
+        <!-- Markdown 编辑器 -->
+        <MarkdownEditor 
+          v-if="contentFormat === 'markdown'"
+          v-model="article.content"
+          placeholder="在这里使用 Markdown 语法书写你的文章内容..."
+          class="markdown-editor-wrapper"
+        />
       </div>
       <div class="form-actions">
         <button type="submit" class="submit-btn" :disabled="isSubmitting">
@@ -74,6 +110,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiFetch, API_ENDPOINTS } from '@/config/api';
+import MarkdownEditor from '../components/MarkdownEditor.vue';
 
 const router = useRouter();
 
@@ -84,6 +121,9 @@ const article = ref({
   excerpt: '',
   content: '',
 });
+
+// 内容格式选择
+const contentFormat = ref<'plain' | 'markdown'>('markdown');
 
 // Store the URL of the currently selected image (can be preset or uploaded preview URL)
 const selectedImageUrl = ref<string | null>(null);
@@ -457,6 +497,62 @@ onMounted(() => {
   text-align: right;
   font-size: 0.9em;
   margin-top: 10px;
+}
+
+/* 内容格式选择器样式 */
+.content-format-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.format-btn {
+  padding: 8px 16px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9em;
+}
+
+.format-btn:hover {
+  background-color: #333;
+  border-color: #00FF00;
+}
+
+.format-btn.active {
+  background-color: #00FF00;
+  color: #000;
+  border-color: #00FF00;
+}
+
+/* 纯文本编辑器样式 */
+.plain-text-editor {
+  width: calc(100% - 20px);
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #222;
+  color: #e0e0e0;
+  font-size: 1em;
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.plain-text-editor:focus {
+  outline: none;
+  border-color: #00FF00;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+/* Markdown 编辑器包装器样式 */
+.markdown-editor-wrapper {
+  width: 100%;
+  min-height: 400px;
 }
 
 /* Responsive adjustments */

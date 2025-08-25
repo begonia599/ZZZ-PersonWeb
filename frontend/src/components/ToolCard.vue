@@ -43,15 +43,18 @@ defineProps<{
   position: relative;
   border-radius: 15px;
   overflow: hidden;
-  min-height: 320px; /* 桌面端最小高度 */
+  width: 100%; /* 卡片宽度填满网格 */
+  max-width: 380px; /* 限制最大宽度 */
+  min-height: 400px; /* 桌面端最小高度 */
+  height: 400px; /* 固定高度，确保所有卡片一致 */
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* 内容从顶部开始 */
-  align-items: center; /* 水平居中 */
+  justify-content: flex-start;
+  align-items: center;
   text-align: center;
-  color: white; /* 确保文字颜色 */
+  color: white;
 }
 
 .drive-card:hover {
@@ -164,16 +167,19 @@ defineProps<{
   background: linear-gradient(45deg, #0056b3, #007bff); /* 悬停时渐变方向或颜色变化 */
 }
 
-/* 响应式调整 (从 drive.css 复制) */
+/* 响应式调整 */
 @media (max-width: 768px) {
     .drive-card {
-        min-height: 280px; /* 移动端最小高度 */
+        min-height: 350px;
+        height: 350px; /* 移动端固定高度 */
+        max-width: 100%; /* 移动端最大宽度 */
     }
     .drive-name {
         font-size: 1.5rem;
     }
     .drive-desc {
         font-size: 0.9rem;
+        margin-bottom: 20px;
     }
     .drive-btn {
         padding: 10px 20px;
@@ -182,6 +188,29 @@ defineProps<{
     .tool-logo-container {
         width: 60px;
         height: 60px;
+        margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .drive-card {
+        height: 320px; /* 小屏幕更紧凑的高度 */
+        min-height: 320px;
+    }
+    .drive-content {
+        padding: 15px;
+    }
+    .drive-name {
+        font-size: 1.3rem;
+    }
+    .drive-desc {
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+    .tool-logo-container {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 10px;
     }
 }
 </style>

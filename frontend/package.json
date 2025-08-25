@@ -11,13 +11,16 @@
   "dependencies": {
     "l2d": "^1.0.0",
     "vue": "^3.4.0",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "marked": "^14.1.0",
+    "highlight.js": "^11.10.0"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
-    "vue-tsc": "^2.0.0"
+    "vue-tsc": "^2.0.0",
+    "@types/marked": "^6.0.0"
   }
 }

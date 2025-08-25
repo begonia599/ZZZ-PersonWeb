@@ -8,23 +8,21 @@
     </div>
 
     <!-- 工具列表内容 -->
+    <div v-if="tools.length === 0" class="no-tools">
+      <p>目前还没有可用的工具。敬请期待！</p>
+    </div>
     <div v-else class="tool-list">
-      <div v-if="tools.length === 0" class="no-tools">
-        <p>目前还没有可用的工具。敬请期待！</p>
-      </div>
-      <div v-else>
-        <ToolCard
-          v-for="tool in tools"
-          :key="tool.id"
-          :id="tool.id"
-          :name="tool.name"
-          :description="tool.description"
-          :path="tool.path"
-          :logoUrl="tool.logoUrl"
-          :backgroundUrl="tool.backgroundUrl"
-          :buttonText="tool.buttonText"
-        />
-      </div>
+      <ToolCard
+        v-for="tool in tools"
+        :key="tool.id"
+        :id="tool.id"
+        :name="tool.name"
+        :description="tool.description"
+        :path="tool.path"
+        :logoUrl="tool.logoUrl"
+        :backgroundUrl="tool.backgroundUrl"
+        :buttonText="tool.buttonText"
+      />
     </div>
   </div>
 </template>
@@ -110,13 +108,18 @@ h1 {
   margin-bottom: 30px;
 }
 
-/* 关键修改：将 tool-list 从 flex 改为 grid，并应用 drive.css 中的 .drive-grid 样式 */
+/* 工具卡片网格布局 - 居中按行排列 */
 .tool-list {
-  display: grid; /* 改为 grid 布局 */
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 桌面端宽度控制 */
-  gap: 25px; /* 卡片间距 */
-  margin-bottom: 40px; /* 与下方元素的间距 */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 380px)); /* 固定最大宽度，确保能在一行显示 */
+  gap: 30px; /* 卡片间距 */
+  margin-bottom: 40px;
+  justify-content: center; /* 整个网格居中 */
   justify-items: center; /* 在网格中居中项目 */
+  max-width: 1200px; /* 限制最大宽度 */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 20px; /* 左右内边距 */
 }
 
 /* 响应式调整：移动端优化 */
@@ -133,8 +136,9 @@ h1 {
   }
   
   .tool-list {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 移动端宽度控制 */
-    gap: 15px; /* 移动端卡片间距 */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 350px)); /* 移动端适配 */
+    gap: 20px; /* 移动端卡片间距 */
+    padding: 0 15px; /* 移动端内边距 */
   }
 }
 
@@ -150,7 +154,8 @@ h1 {
   
   .tool-list {
     grid-template-columns: 1fr; /* 小屏幕单列布局 */
-    gap: 12px;
+    gap: 15px;
+    padding: 0 10px; /* 小屏幕内边距 */
   }
 }
 
