@@ -8,7 +8,7 @@ COPY package*.json ./
 
 # 多架构优化的依赖安装（国外服务器统一使用官方源）
 RUN npm config set registry https://registry.npmjs.org/ && \
-    npm ci --prefer-offline --no-audit
+    npm install --prefer-offline --no-audit
 
 # 复制源代码
 COPY . .
