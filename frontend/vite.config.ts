@@ -1,6 +1,17 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import fs from 'fs'
+
+// 读取站点配置
+let siteConfig: any = {}
+try {
+  if (fs.existsSync(path.resolve(__dirname, '../site-config.json'))) {
+    siteConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../site-config.json'), 'utf-8'))
+  }
+} catch (error) {
+  console.log('未找到site-config.json，使用默认配置')
+}
 
 // 自定义插件：生产环境移除console
 const removeConsolePlugin = () => {
@@ -54,6 +65,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // 允许外部访问
     port: 5173,
+    // 允许的主机名（解决Blocked request问题）
+    allowedHosts: siteConfig.server?.allowedHosts || [
+      'localhost',
+      '127.0.0.1'
+    ],
     proxy: {
       '/api': {
         // 环境检测：Docker环境 vs 本地开发 vs 生产环境
