@@ -18,37 +18,101 @@
 
   <!-- 页脚组件 -->
   <Footer />
+  
+  <!-- Live2D模型 - 固定在屏幕右下角 -->
+  <Live2DModel 
+    v-if="!isMobileDevice"
+    modelId="furina" 
+    :canvasWidth="300"
+    :canvasHeight="300"
+    :position="[100, 0]"
+    @model-loaded="handleModelLoaded"
+    @model-error="handleModelError"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import LoadingAnimation from './components/LoadingAnimation.vue';
 import Background from './components/Background.vue';
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
-import MetricsSidebar from './components/MetricsSidebar.vue'; // **新增：导入 MetricsSidebar 组件**
+import MetricsSidebar from './components/MetricsSidebar.vue';
+import Live2DModel from './components/Live2DModel.vue';
 
-const isLoading = ref(false); 
+const isLoading = ref(false);
+
+// 移动设备检测
+const isMobileDevice = ref(false);
+
+// 检测是否为移动设备
+const checkMobileDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileKeywords = ['mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone'];
+  const isMobile = mobileKeywords.some(keyword => userAgent.includes(keyword));
+  const isSmallScreen = window.innerWidth <= 768;
+  
+  isMobileDevice.value = isMobile || isSmallScreen;
+};
+
+// Live2D模型事件处理
+const handleModelLoaded = (model: any) => {
+  console.log('App收到事件：Live2D模型已加载', model);
+};
+
+const handleModelError = (error: any) => {
+  console.error('App收到事件：Live2D模型加载失败', error);
+};
+
+onMounted(() => {
+  // 初始检测移动设备
+  checkMobileDevice();
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', checkMobileDevice);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobileDevice);
+}); 
 </script>
 
 <style>
 /* 全局样式：确保 body, html, 和 #app 的样式是干净的，不影响布局 */
-html, body, #app {
+html, body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  overflow-y: auto; /* 允许内容滚动 */
-  overflow-x: hidden; /* 隐藏水平滚动条 */
-  display: flex; /* 关键：使用 Flexbox 布局 */
-  flex-direction: column; /* 关键：垂直方向排列子元素 */
+  overflow: hidden; /* 禁用原生滚动 */
+}
+
+#app {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh; /* 固定高度 */
+  overflow: hidden; /* 禁用滚动 */
+  display: flex; 
+  flex-direction: column; 
+  position: relative; /* 为内容提供定位上下文 */
+}
+
+/* 可滚动容器 */
+.scrollable-container {
+  flex: 1;
+  overflow: hidden; /* 禁用原生滚动 */
+  position: relative;
+  transform: translateY(0); /* 用于JS控制滚动 */
+  transition: none; /* 禁用CSS过渡 */
 }
 
 /* 新增样式：确保主内容区域至少占据视口高度，将页脚推到下方 */
 .main-content-wrapper {
-  flex: 1; /* 关键：让它占据所有可用空间并根据内容增长 */
   padding-top: 60px; /* 为导航栏留出空间 */
+  min-height: calc(100vh + 800px);
 }
 
 /* 移动端响应式设计 */

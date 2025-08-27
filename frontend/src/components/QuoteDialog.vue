@@ -238,9 +238,9 @@ onUnmounted(() => {
 <style scoped>
 .quote-dialog {
   position: absolute;
-  top: 65%;
+  top: 300px; /* 调整到欢迎标语下面 */
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 8;
   max-width: 600px;
   width: 90%;

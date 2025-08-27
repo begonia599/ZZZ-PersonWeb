@@ -46,11 +46,13 @@ def create_app():
     from metrics_app.routes import metrics_bp
     from drive_app.routes import drive_bp
     from travel_app.routes import travel_bp
+    from profile_stats import profile_stats_bp
 
     app.register_blueprint(blog_bp)
     app.register_blueprint(metrics_bp)
     app.register_blueprint(drive_bp)
     app.register_blueprint(travel_bp)
+    app.register_blueprint(profile_stats_bp)
 
     # 注册CLI命令
     app.cli.add_command(init_metrics_command)

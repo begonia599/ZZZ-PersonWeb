@@ -301,7 +301,7 @@ onUnmounted(() => {
 .photo-carousel {
   position: absolute;
   left: 20px;
-  top: 150px; /* 从页面顶部开始的固定距离 */
+  top: 550px; /* 进一步下移照片轮播组件 */
   width: 320px;
   z-index: 10;
   background: rgba(255, 255, 255, 0.1);

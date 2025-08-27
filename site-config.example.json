@@ -1,0 +1,18 @@
+{
+  "site": {
+    "title": "个人网站",
+    "description": "欢迎来到我的个人网站"
+  },
+  "footer": {
+    "showIcp": true,
+    "icpNumber": "京ICP备xxxxxxxx号-x",
+    "icpUrl": "https://beian.miit.gov.cn/",
+    "showPoliceRecord": true,
+    "policeNumber": "京公网安备 xxxxxxxxxxxxxxxx号",
+    "policeUrl": "http://www.beian.gov.cn/"
+  },
+  "deployment": {
+    "region": "china",
+    "needsIcp": true
+  }
+}

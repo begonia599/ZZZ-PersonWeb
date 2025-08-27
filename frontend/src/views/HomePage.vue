@@ -4,6 +4,9 @@
     <h1 class="welcome-title">欢迎来到秋海棠的个人网站</h1>
     <p class="welcome-text">探索我的博客、工具箱和更多内容。</p>
     
+    <!-- 资料卡片组件 -->
+    <ProfileCard />
+    
     <!-- 照片轮播组件 -->
     <PhotoCarousel />
     
@@ -11,25 +14,19 @@
     <QuoteDialog />
     
     <div class="spacer"></div> <!-- 一个撑开空间的 div -->
+    
+    <!-- 强制增加页面高度的隐形div -->
+    <div class="height-filler"></div>
 
-    <!-- 使用 Live2DCanvas 组件 - 仅在桌面端显示 -->
-    <Live2DCanvas 
-      v-if="!isMobileDevice"
-      modelId="furina" 
-      :canvasWidth="live2dModelWidth"
-      :canvasHeight="live2dModelHeight"
-      :position="[100, 0]"
-      @model-loaded="handleModelLoaded"
-      @model-error="handleModelError"
-    />
+    <!-- Live2D模型已移至App.vue，以保持屏幕固定位置 -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue';
-import Live2DCanvas from '../components/Live2DModel.vue'; // 确保路径正确，现在是 Live2DCanvas
 import PhotoCarousel from '../components/PhotoCarousel.vue';
 import QuoteDialog from '../components/QuoteDialog.vue';
+import ProfileCard from '../components/ProfileCard.vue';
 
 // 移动设备检测
 const isMobileDevice = ref(false);
@@ -45,32 +42,10 @@ const checkMobileDevice = () => {
 };
 
 // 从环境变量读取 Live2D 模型配置
-// 使用 parseInt 确保宽度和高度是数字类型，并提供默认值以防环境变量未定义
-// 注意：live2dModelPath 变量已移除，因为 Live2DCanvas 组件通过 modelId 构造路径
-const live2dModelWidth = parseInt(import.meta.env.VITE_LIVE2D_MODEL_WIDTH || '400');
-const live2dModelHeight = parseInt(import.meta.env.VITE_LIVE2D_MODEL_HEIGHT || '500');
-
-// 定义 Live2D 模型相关的类型接口，与 Live2DModel.vue 中保持一致
-interface IL2DModel {
-  setPosition: (position: [number, number]) => void;
-  setScale: (scale: number | 'auto') => void;
-  setVolume: (volume: number) => void;
-  on: (event: 'hit', callback: (area: string[] | Record<string, any> | undefined) => void) => void;
-  showHitAreaFrames: () => void;
-  hideHitAreaFrames: () => void;
-  dispose?: () => void;
-}
-
-const handleModelLoaded = (model: IL2DModel) => {
-  console.log('主页收到事件：模型已加载', model);
-};
-
-const handleModelError = (error: any) => {
-  console.error('主页收到事件：模型加载失败', error);
-};
+// Live2D相关代码已移至App.vue
 
 onMounted(() => {
-  console.log("HomePage mounted. Live2DModel component will handle canvas.");
+  console.log("HomePage mounted.");
   
   // 检测移动设备
   checkMobileDevice();
@@ -93,13 +68,17 @@ onBeforeUnmount(() => {
   padding-bottom: 20px;
   width: 100%;
   box-sizing: border-box;
-  position: relative;
+  position: absolute; /* 改为绝对定位 */
+  top: 0;
+  left: 0;
   z-index: 5;
   color: #fff;
   text-align: center;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 60px);
+  /* 强制设置固定高度，确保有滚动内容 */
+  height: calc(100vh + 1200px) !important; /* 增加高度 */
+  min-height: calc(100vh + 1200px);
 }
 
 .welcome-title {
@@ -120,6 +99,14 @@ onBeforeUnmount(() => {
   flex-grow: 1;
 }
 
+/* 强制增加页面高度 */
+.height-filler {
+  height: 800px !important;
+  width: 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .home-page-container {
@@ -127,7 +114,8 @@ onBeforeUnmount(() => {
     padding-left: 15px;
     padding-right: 15px;
     width: 100%;
-    min-height: calc(100vh - 100px);
+    height: calc(100vh + 800px) !important; /* 强制移动端也有足够高度 */
+    min-height: calc(100vh + 800px) !important; /* 移动端也需要足够空间 */
   }
   .welcome-title {
     font-size: 2.5em;
@@ -144,7 +132,8 @@ onBeforeUnmount(() => {
     padding-top: 120px;
     padding-left: 10px;
     padding-right: 10px;
-    min-height: calc(100vh - 120px);
+    height: calc(100vh + 800px) !important; /* 强制小屏幕也有足够高度 */
+    min-height: calc(100vh + 800px) !important; /* 小屏幕也需要足够空间 */
   }
   .welcome-title {
     font-size: 2em;

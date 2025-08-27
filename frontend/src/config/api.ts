@@ -39,8 +39,6 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
   try {
-    console.log(`API 调用: ${options.method || 'GET'} ${url}`);
-    
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -54,7 +52,6 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     }
 
     const data = await response.json();
-    console.log(`API 响应成功: ${url}`, data);
     return data;
   } catch (error) {
     console.error(`API 调用失败: ${url}`, error);

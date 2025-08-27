@@ -2,15 +2,26 @@
   <footer class="app-footer">
     <div class="footer-content">
       <p>&copy; {{ currentYear }} 秋海棠的个人网站. All Rights Reserved.</p>
-      <p>
-        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="beian-link">
-          苏ICP备2025190782号-1
+      <p v-if="config.footer.showIcp || config.footer.showPoliceRecord">
+        <a 
+          v-if="config.footer.showIcp"
+          :href="config.footer.icpUrl" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="beian-link"
+        >
+          {{ config.footer.icpNumber }}
         </a>
-        <!-- 如果有公安备案，也可以加上 -->
-        <!-- <span class="separator">|</span> -->
-        <!-- <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=XXXXXXXXXXXXXX" target="_blank" rel="noopener noreferrer" class="beian-link">
-          <img src="/path/to/gongan_logo.png" alt="公安备案图标" class="gongan-logo"> 粤公网安备 XXXXXXXXXXXXXX号
-        </a> -->
+        <span v-if="config.footer.showIcp && config.footer.showPoliceRecord" class="separator">|</span>
+        <a 
+          v-if="config.footer.showPoliceRecord"
+          :href="config.footer.policeUrl" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="beian-link"
+        >
+          {{ config.footer.policeNumber }}
+        </a>
       </p>
       <p class="powered-by">Powered by Vue 3 & Vite</p>
     </div>
@@ -18,9 +29,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const currentYear = ref(new Date().getFullYear());
+
+// 默认配置（海外部署）
+const config = ref({
+  footer: {
+    showIcp: false,
+    icpNumber: '',
+    icpUrl: '',
+    showPoliceRecord: false,
+    policeNumber: '',
+    policeUrl: ''
+  }
+});
+
+// 加载站点配置
+onMounted(async () => {
+  try {
+    const response = await fetch('/site-config.json');
+    if (response.ok) {
+      const siteConfig = await response.json();
+      config.value = siteConfig;
+    }
+  } catch (error) {
+    console.log('使用默认配置（未找到site-config.json）');
+  }
+});
 </script>
 
 <style scoped>
@@ -35,7 +71,7 @@ const currentYear = ref(new Date().getFullYear());
   z-index: 10; /* 比背景低，比内容高 */
   width: 100%;
   box-sizing: border-box;
-  margin-top: auto; /* 确保页脚推到底部 */
+  margin-top: 300px; /* 进一步增加上边距，为下移的照片轮播组件留出更多空间 */
 }
 
 .footer-content {
