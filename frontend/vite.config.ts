@@ -89,6 +89,11 @@ export default defineConfig({
       'localhost',
       '127.0.0.1'
     ],
+    // 修复WebSocket连接问题
+    hmr: {
+      port: 5173,
+      host: 'localhost'
+    },
     proxy: {
       '/api': {
         // 环境检测：Docker环境 vs 本地开发 vs 生产环境
