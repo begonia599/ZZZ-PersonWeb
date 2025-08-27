@@ -3,6 +3,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     ports:
       - "5173:5173" 
     volumes:
@@ -18,11 +21,23 @@ services:
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     depends_on:
       - backend 
+    # ARM架构性能优化
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     ports:
       - "5000:5000"
     volumes:
@@ -32,3 +47,12 @@ services:
       - PYTHONUNBUFFERED=1 
     command: >
       gunicorn -w 4 -b 0.0.0.0:5000 --log-file - --error-logfile - "run:app"
+    # ARM架构性能优化
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M

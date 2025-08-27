@@ -23,10 +23,23 @@ RUN if [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then \
         pip install --no-cache-dir -r requirements.txt --default-timeout=100; \
     fi
 
+# 复制应用代码
 COPY . .
 
-ENV FLASK_APP=run.py
+# 创建必要的目录
+RUN mkdir -p /app/instance /app/uploads
 
+# 设置环境变量
+ENV FLASK_APP=run.py
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+# 暴露端口
 EXPOSE 5000
 
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "run:create_app"]
+# 生产环境启动命令 - 根据架构调整worker数量
+CMD if [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then \
+        gunicorn -w 2 -b 0.0.0.0:5000 --log-file - --error-logfile - --timeout 120 "run:app"; \
+    else \
+        gunicorn -w 4 -b 0.0.0.0:5000 --log-file - --error-logfile - --timeout 120 "run:app"; \
+    fi

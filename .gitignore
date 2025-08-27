@@ -38,3 +38,7 @@ DEPLOYMENT.md
 # 本地配置文件（包含备案信息等）
 site-config.json
 .env.local
+
+# 部署脚本备份文件
+*.backup
+deploy.log

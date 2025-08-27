@@ -1,5 +1,5 @@
-# 使用官方的 Node.js LTS Alpine 基础镜像
-FROM node:lts-alpine
+# 使用官方的 Node.js LTS Alpine 基础镜像 (支持多架构)
+FROM --platform=$BUILDPLATFORM node:lts-alpine
 
 # 设置工作目录
 WORKDIR /app
@@ -7,11 +7,11 @@ WORKDIR /app
 # 复制 package.json 和 package-lock.json (或 yarn.lock)
 COPY package*.json ./
 
-# **关键修改：设置 npm 镜像源**
-RUN npm config set registry https://registry.npmmirror.com/
+# **多架构优化：统一使用官方镜像源（适合国外服务器）**
+RUN npm config set registry https://registry.npmjs.org/
 
-# 安装前端依赖
-RUN npm install
+# 安装前端依赖，针对ARM架构优化
+RUN npm install --prefer-offline --no-audit
 
 # 复制前端应用的其余代码
 COPY . .
