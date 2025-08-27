@@ -101,15 +101,8 @@ backup_config() {
 stop_services() {
     log_info "停止当前运行的服务..."
     
-    # 尝试停止生产环境
-    if [ -f "docker-compose.prod.yml" ]; then
-        $DOCKER_COMPOSE -f docker-compose.prod.yml down || true
-    fi
-    
-    # 尝试停止开发环境
-    if [ -f "docker-compose.yml" ]; then
-        $DOCKER_COMPOSE down || true
-    fi
+    # 停止服务
+    $DOCKER_COMPOSE down || true
     
     log_success "服务已停止"
 }
@@ -181,17 +174,8 @@ start_services() {
     ARCH=$(uname -m)
     log_info "检测到架构: $ARCH"
     
-    # 选择配置文件
-    if [ -f "docker-compose.prod.yml" ]; then
-        COMPOSE_FILE="docker-compose.prod.yml"
-        log_info "使用生产环境配置"
-    else
-        COMPOSE_FILE="docker-compose.yml"
-        log_info "使用开发环境配置"
-    fi
-    
     # 构建并启动
-    $DOCKER_COMPOSE -f $COMPOSE_FILE up --build -d
+    $DOCKER_COMPOSE up --build -d
     
     log_success "服务启动完成"
 }
@@ -204,16 +188,16 @@ health_check() {
     sleep 10
     
     # 检查容器状态
-    if $DOCKER_COMPOSE -f $COMPOSE_FILE ps | grep -q "Up"; then
+    if $DOCKER_COMPOSE ps | grep -q "Up"; then
         log_success "容器运行正常"
     else
         log_warning "部分容器可能未正常启动，请检查日志"
-        $DOCKER_COMPOSE -f $COMPOSE_FILE ps
+        $DOCKER_COMPOSE ps
     fi
     
     # 检查端口
-    if netstat -tuln | grep -q ":80 "; then
-        log_success "前端服务 (端口80) 运行正常"
+    if netstat -tuln | grep -q ":5173 "; then
+        log_success "前端服务 (端口5173) 运行正常"
     else
         log_warning "前端服务可能未正常启动"
     fi
@@ -231,14 +215,14 @@ show_info() {
     echo "🎉 部署完成！"
     echo ""
     echo "📋 服务信息:"
-    echo "  - 前端服务: http://$(hostname -I | awk '{print $1}'):80"
+    echo "  - 前端服务: http://$(hostname -I | awk '{print $1}'):5173"
     echo "  - 后端API: http://$(hostname -I | awk '{print $1}'):5000"
     echo "  - 架构: $(uname -m)"
     echo ""
     echo "🔧 管理命令:"
-    echo "  - 查看日志: $DOCKER_COMPOSE -f $COMPOSE_FILE logs -f"
-    echo "  - 重启服务: $DOCKER_COMPOSE -f $COMPOSE_FILE restart"
-    echo "  - 停止服务: $DOCKER_COMPOSE -f $COMPOSE_FILE down"
+    echo "  - 查看日志: $DOCKER_COMPOSE logs -f"
+    echo "  - 重启服务: $DOCKER_COMPOSE restart"
+    echo "  - 停止服务: $DOCKER_COMPOSE down"
     echo ""
     echo "📁 配置文件:"
     echo "  - 站点配置: site-config.json"
