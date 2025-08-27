@@ -43,15 +43,22 @@ check_permissions() {
     fi
 }
 
-# 检查Docker和docker-compose
+# 检查Docker和docker compose
 check_docker() {
     if ! command -v docker &> /dev/null; then
         log_error "Docker未安装，请先安装Docker"
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
-        log_error "docker-compose未安装，请先安装docker-compose"
+    # 检查新版本的 docker compose 或旧版本的 docker-compose
+    if docker compose version &> /dev/null; then
+        DOCKER_COMPOSE="docker compose"
+        log_info "检测到新版本 docker compose"
+    elif command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE="docker-compose"
+        log_info "检测到旧版本 docker-compose"
+    else
+        log_error "docker compose 未安装，请先安装 Docker Compose"
         exit 1
     fi
     
@@ -96,12 +103,12 @@ stop_services() {
     
     # 尝试停止生产环境
     if [ -f "docker-compose.prod.yml" ]; then
-        docker-compose -f docker-compose.prod.yml down || true
+        $DOCKER_COMPOSE -f docker-compose.prod.yml down || true
     fi
     
     # 尝试停止开发环境
     if [ -f "docker-compose.yml" ]; then
-        docker-compose down || true
+        $DOCKER_COMPOSE down || true
     fi
     
     log_success "服务已停止"
@@ -184,7 +191,7 @@ start_services() {
     fi
     
     # 构建并启动
-    docker-compose -f $COMPOSE_FILE up --build -d
+    $DOCKER_COMPOSE -f $COMPOSE_FILE up --build -d
     
     log_success "服务启动完成"
 }
@@ -197,11 +204,11 @@ health_check() {
     sleep 10
     
     # 检查容器状态
-    if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if $DOCKER_COMPOSE -f $COMPOSE_FILE ps | grep -q "Up"; then
         log_success "容器运行正常"
     else
         log_warning "部分容器可能未正常启动，请检查日志"
-        docker-compose -f docker-compose.prod.yml ps
+        $DOCKER_COMPOSE -f $COMPOSE_FILE ps
     fi
     
     # 检查端口
@@ -229,9 +236,9 @@ show_info() {
     echo "  - 架构: $(uname -m)"
     echo ""
     echo "🔧 管理命令:"
-    echo "  - 查看日志: docker-compose -f docker-compose.prod.yml logs -f"
-    echo "  - 重启服务: docker-compose -f docker-compose.prod.yml restart"
-    echo "  - 停止服务: docker-compose -f docker-compose.prod.yml down"
+    echo "  - 查看日志: $DOCKER_COMPOSE -f $COMPOSE_FILE logs -f"
+    echo "  - 重启服务: $DOCKER_COMPOSE -f $COMPOSE_FILE restart"
+    echo "  - 停止服务: $DOCKER_COMPOSE -f $COMPOSE_FILE down"
     echo ""
     echo "📁 配置文件:"
     echo "  - 站点配置: site-config.json"
