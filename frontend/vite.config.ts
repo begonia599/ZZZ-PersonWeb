@@ -6,11 +6,30 @@ import fs from 'fs'
 // 读取站点配置
 let siteConfig: any = {}
 try {
-  if (fs.existsSync(path.resolve(__dirname, '../site-config.json'))) {
-    siteConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../site-config.json'), 'utf-8'))
+  // 尝试多个可能的路径
+  const configPaths = [
+    path.resolve(__dirname, '../site-config.json'),  // 开发环境
+    path.resolve(process.cwd(), 'site-config.json'), // Docker环境
+    '/app/site-config.json' // 容器内绝对路径
+  ]
+  
+  let configFound = false
+  for (const configPath of configPaths) {
+    if (fs.existsSync(configPath)) {
+      siteConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      console.log(`✅ 配置文件加载成功: ${configPath}`)
+      console.log(`🌐 允许的主机: ${siteConfig.server?.allowedHosts?.join(', ') || '默认'}`)
+      configFound = true
+      break
+    }
+  }
+  
+  if (!configFound) {
+    console.log('❌ 未找到site-config.json，使用默认配置')
+    console.log(`🔍 尝试的路径: ${configPaths.join(', ')}`)
   }
 } catch (error) {
-  console.log('未找到site-config.json，使用默认配置')
+  console.log('❌ 配置文件读取错误:', error)
 }
 
 // 自定义插件：生产环境移除console

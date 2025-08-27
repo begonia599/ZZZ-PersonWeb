@@ -10,7 +10,8 @@ services:
       - "5173:5173" 
     volumes:
       - ./frontend:/app 
-      - /app/node_modules 
+      - /app/node_modules
+      - ./site-config.json:/app/site-config.json:ro 
     environment:
       - VITE_LIVE2D_MODEL_PATH=${VITE_LIVE2D_MODEL_PATH} 
       - VITE_LIVE2D_MODEL_WIDTH=${VITE_LIVE2D_MODEL_WIDTH}
