@@ -5,9 +5,16 @@ from flask import Flask, current_app
 from database import db  # 从独立文件导入
 from flask_migrate import Migrate
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import click
 import logging
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -28,7 +35,8 @@ def create_app():
         SQLALCHEMY_BINDS={
             'blog_db': 'sqlite:///' + os.path.join(instance_dir, 'blog.db'),
             'drive_stats': 'sqlite:///' + os.path.join(instance_dir, 'drive_stats.db'),
-            'travel_db': 'sqlite:///' + os.path.join(instance_dir, 'travel.db')
+            'travel_db': 'sqlite:///' + os.path.join(instance_dir, 'travel.db'),
+            'checkin_db': 'sqlite:///' + os.path.join(instance_dir, 'checkin.db')
         }
     )
 
@@ -46,11 +54,13 @@ def create_app():
     from metrics_app.routes import metrics_bp
     from drive_app.routes import drive_bp
     from travel_app.routes import travel_bp
+    from checkin_app.routes import checkin_bp
 
     app.register_blueprint(blog_bp)
     app.register_blueprint(metrics_bp)
     app.register_blueprint(drive_bp)
     app.register_blueprint(travel_bp)
+    app.register_blueprint(checkin_bp)
 
     # 注册CLI命令
     app.cli.add_command(init_metrics_command)
@@ -112,7 +122,7 @@ def init_metrics_command():
     try:
         metrics_row = WebsiteMetrics.query.get(1)
         if not metrics_row:
-            new_metrics = WebsiteMetrics(id=1, visitor_count=0, startup_time=datetime.utcnow())
+            new_metrics = WebsiteMetrics(id=1, visitor_count=0, startup_time=get_beijing_now())
             db.session.add(new_metrics)
             db.session.commit()
             current_app.logger.info("网站指标已在 SQLite 中初始化。")

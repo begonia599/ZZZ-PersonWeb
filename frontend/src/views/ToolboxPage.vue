@@ -66,6 +66,15 @@ onMounted(() => {
         backgroundUrl: '/assets/images/青衣.webp',
         buttonText: '开始记录'
       },
+      {
+        id: 3,
+        name: '打卡工具',
+        description: '创建个性化打卡任务，设置打卡频率、周期和目标，支持添加备注和图片记录，养成良好习惯。',
+        path: '/toolbox/checkin',
+        logoUrl: '/tool-icons/checkin-logo.png',
+        backgroundUrl: '/tool-icons/checkin-card-bg.jpg',
+        buttonText: '开始打卡'
+      },
       // 可以在这里添加更多工具
     ];
     isLoading.value = false;

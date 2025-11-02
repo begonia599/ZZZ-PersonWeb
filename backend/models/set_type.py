@@ -1,5 +1,13 @@
 # backend/models/set_type.py
 from database import db
+from datetime import datetime, timedelta, timezone
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 class SetType(db.Model):
     __bind_key__ = 'drive_stats'
@@ -9,7 +17,7 @@ class SetType(db.Model):
     set_name = db.Column(db.String(50), nullable=False, unique=True)
     two_piece_effect = db.Column(db.Text)  # 二件套效果
     four_piece_effect = db.Column(db.Text)  # 四件套效果
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
 
     def __repr__(self):
         return f'<SetType {self.set_id}: {self.set_name}>'

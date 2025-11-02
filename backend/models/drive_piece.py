@@ -1,7 +1,14 @@
 # backend/models/drive_piece.py
 from database import db
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.dialects.postgresql import JSON  # 如果使用 PostgreSQL，可以直接使用 JSON 类型
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 class DrivePiece(db.Model):
     __bind_key__ = 'drive_stats'
@@ -14,8 +21,8 @@ class DrivePiece(db.Model):
     main_stat_level = db.Column(db.Integer, default=15)  # 主词条等级，默认15
     total_upgrades = db.Column(db.Integer, default=0)  # 强化点数
     substats = db.Column(db.JSON)  # 以JSON格式存储副词条列表
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
+    updated_at = db.Column(db.DateTime, default=get_beijing_now, onupdate=get_beijing_now)
 
     # 关系定义
     set_type = db.relationship('SetType', backref=db.backref('drive_pieces', lazy=True))
@@ -47,7 +54,7 @@ class DrivePieceSubstat(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     drive_id = db.Column(db.Integer, db.ForeignKey('drive_pieces.drive_id', ondelete='CASCADE'), nullable=False)
     stat_id = db.Column(db.Integer, db.ForeignKey('stat_types.stat_type_id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
 
     # 关系定义
     drive_piece = db.relationship('DrivePiece', backref=db.backref('substat_entries', lazy=True, cascade='all, delete-orphan'))

@@ -1,6 +1,13 @@
 # backend/models/metrics.py
 from database import db
-from datetime import datetime # 确保 datetime 已导入
+from datetime import datetime, timedelta, timezone # 确保 datetime 已导入
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 class WebsiteMetrics(db.Model):
     """
@@ -9,8 +16,8 @@ class WebsiteMetrics(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True, default=1) # 固定 ID 用于单行
     visitor_count = db.Column(db.Integer, default=0, nullable=False)
-    startup_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) # 使用 datetime.utcnow
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # 使用 datetime.utcnow
+    startup_time = db.Column(db.DateTime, default=get_beijing_now, nullable=False) # 使用北京时间
+    last_updated = db.Column(db.DateTime, default=get_beijing_now, onupdate=get_beijing_now) # 使用北京时间
 
     def __repr__(self):
         return f'<WebsiteMetrics visitor_count={self.visitor_count}>'

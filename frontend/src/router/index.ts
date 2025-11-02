@@ -13,7 +13,10 @@ import DriveEditPage from '../views/DriveEditPage.vue';
 import TravelPage from '../views/TravelPage.vue';
 import TravelUploadPage from '../views/TravelUploadPage.vue';
 import TravelGalleryPage from '../views/TravelGalleryPage.vue';
-// import AboutMePage from '../components/AboutMePage.vue';
+import CheckinPage from '../views/CheckinPage.vue';
+import CheckinAddPage from '../views/CheckinAddPage.vue';
+import CheckinDetailPage from '../views/CheckinDetailPage.vue';
+import AboutMePage from '../views/AboutMePage.vue';
 // import ContactPage from '../components/ContactPage.vue';
 
 const routes = [
@@ -85,9 +88,24 @@ const routes = [
     component: TravelGalleryPage
   },
   {
+    path: '/toolbox/checkin',
+    name: 'Checkin',
+    component: CheckinPage
+  },
+  {
+    path: '/toolbox/checkin/add',
+    name: 'CheckinAdd',
+    component: CheckinAddPage
+  },
+  {
+    path: '/toolbox/checkin/detail/:id',
+    name: 'CheckinDetail',
+    component: CheckinDetailPage
+  },
+  {
     path: '/about',
     name: 'About',
-    component:HomePage,
+    component: AboutMePage,
   },
   {
     path: '/contact',

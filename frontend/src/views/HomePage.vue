@@ -1,7 +1,7 @@
 <template>
   <div class="home-page-container">
     <!-- 你的主页内容 -->
-    <h1 class="welcome-title">欢迎来到秋海棠的个人网站</h1>
+    <h1 class="welcome-title">欢迎来到{{ siteName }}</h1>
     <p class="welcome-text">探索我的博客、工具箱和更多内容。</p>
     
     <!-- 照片轮播组件 -->
@@ -30,6 +30,9 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import Live2DCanvas from '../components/Live2DModel.vue'; // 确保路径正确，现在是 Live2DCanvas
 import PhotoCarousel from '../components/PhotoCarousel.vue';
 import QuoteDialog from '../components/QuoteDialog.vue';
+
+// 从环境变量读取网站配置
+const siteName = import.meta.env.VITE_SITE_NAME || '个人网站';
 
 // 移动设备检测
 const isMobileDevice = ref(false);

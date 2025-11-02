@@ -2,7 +2,7 @@
   <div class="article-page-container">
     <h1 class="article-title">{{ article.title }}</h1>
     <p class="article-meta">
-      发布日期: {{ formattedCreatedAt }} | 作者: 秋海棠 
+      发布日期: {{ formattedCreatedAt }} | 作者: {{ siteAuthor }} 
       <span v-if="article.updatedAt && article.createdAt !== article.updatedAt">(更新于: {{ formattedUpdatedAt }})</span>
     </p>
     <div class="article-content-wrapper">
@@ -41,6 +41,9 @@ import MarkdownRenderer from '../components/MarkdownRenderer.vue';
 import { apiFetch, API_ENDPOINTS } from '@/config/api';
 
 const route = useRoute();
+
+// 从环境变量读取作者名称
+const siteAuthor = import.meta.env.VITE_SITE_AUTHOR || '作者';
 
 interface Article {
   id: number | null;

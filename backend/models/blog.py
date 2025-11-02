@@ -1,6 +1,14 @@
 # models/blog.py
 # **关键修改：从独立文件导入 db 实例**
-from database import db  
+from database import db
+from datetime import datetime, timedelta, timezone
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)  
 
 class Post(db.Model):
     """
@@ -11,8 +19,8 @@ class Post(db.Model):
     excerpt = db.Column(db.Text, nullable=True) # Short summary of the post
     content = db.Column(db.Text, nullable=False)
     image_url = db.Column(db.String(255), nullable=True) # URL for the cover image
-    created_at = db.Column(db.DateTime, default=db.func.now())
-    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
+    updated_at = db.Column(db.DateTime, default=get_beijing_now, onupdate=get_beijing_now)
     views = db.Column(db.Integer, default=0) # 新增：阅读量字段，默认值为 0
 
     def __repr__(self):

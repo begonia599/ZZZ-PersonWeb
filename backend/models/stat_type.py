@@ -1,6 +1,13 @@
 # backend/models/stat_type.py
 from database import db # 从 run 导入新的数据库实例
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 class StatType(db.Model):
     __bind_key__ = 'drive_stats' # 指定使用哪个数据库连接
@@ -9,7 +16,7 @@ class StatType(db.Model):
     stat_type_id = db.Column(db.Integer, primary_key=True, autoincrement=True) # AUTO_INCREMENT 自动处理
     stat_name = db.Column(db.String(50), nullable=False, unique=True)
     stat_type = db.Column(db.String(20))  # 'main' 或 'sub' 或 'both'
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
 
     def __repr__(self):
         return f'<StatType {self.stat_type_id}: {self.stat_name}>'

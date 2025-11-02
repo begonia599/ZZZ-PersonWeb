@@ -1,5 +1,13 @@
 # models/travel_photo.py
 from database import db
+from datetime import datetime, timedelta, timezone
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 class TravelPhoto(db.Model):
     """
@@ -17,8 +25,8 @@ class TravelPhoto(db.Model):
     file_type = db.Column(db.String(50), nullable=False)
     url = db.Column(db.String(500), nullable=False)
     thumbnail_url = db.Column(db.String(500), nullable=True)
-    created_at = db.Column(db.DateTime, default=db.func.now())
-    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
+    updated_at = db.Column(db.DateTime, default=get_beijing_now, onupdate=get_beijing_now)
 
     def __repr__(self):
         """

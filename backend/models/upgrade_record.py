@@ -1,6 +1,13 @@
 # backend/models/upgrade_record.py
 from database import db # 从 run 导入新的数据库实例
-from datetime import datetime 
+from datetime import datetime, timedelta, timezone
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ) 
 
 class UpgradeRecord(db.Model):
     __bind_key__ = 'drive_stats' # 指定使用哪个数据库连接
@@ -11,8 +18,8 @@ class UpgradeRecord(db.Model):
     substat_id = db.Column(db.Integer, db.ForeignKey('drive_piece_substats.id', ondelete='CASCADE'), nullable=False)
     is_original = db.Column(db.Boolean, nullable=False, default=True)  # 是否是原始词条
     upgrade_count = db.Column(db.Integer, nullable=False, default=0)  # 强化次数
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_beijing_now)
+    updated_at = db.Column(db.DateTime, default=get_beijing_now, onupdate=get_beijing_now)
 
     # 关系定义
     drive_piece = db.relationship('DrivePiece', backref=db.backref('upgrade_records', lazy=True, cascade='all, delete-orphan'))

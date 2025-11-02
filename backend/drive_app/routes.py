@@ -6,8 +6,15 @@ from models.drive_piece import DrivePiece, DrivePieceSubstat
 from models.upgrade_record import UpgradeRecord
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func, case, and_
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import random
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 # 创建一个蓝图实例，所有与驱动盘相关的路由都将注册到这个蓝图上
 # url_prefix='/api/drive' 意味着所有路由都将以 /api/drive 开头
@@ -645,7 +652,7 @@ def get_drive_stats():
             'substat_frequency': substat_frequency,
             'substat_count_distribution': substat_count_dist,
             'upgrade_distribution': upgrade_distribution,
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': get_beijing_now().isoformat()
         }), 200
         
     except Exception as e:

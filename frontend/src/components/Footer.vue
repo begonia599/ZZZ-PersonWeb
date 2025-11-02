@@ -1,16 +1,17 @@
 <template>
   <footer class="app-footer">
     <div class="footer-content">
-      <p>&copy; {{ currentYear }} 秋海棠的个人网站. All Rights Reserved.</p>
+      <p>&copy; {{ currentYear }} {{ siteName }}. All Rights Reserved.</p>
       <p>
-        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="beian-link">
-          苏ICP备2025190782号-1
+        <a v-if="icpBeian" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="beian-link">
+          {{ icpBeian }}
         </a>
-        <!-- 如果有公安备案，也可以加上 -->
-        <!-- <span class="separator">|</span> -->
-        <!-- <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=XXXXXXXXXXXXXX" target="_blank" rel="noopener noreferrer" class="beian-link">
-          <img src="/path/to/gongan_logo.png" alt="公安备案图标" class="gongan-logo"> 粤公网安备 XXXXXXXXXXXXXX号
-        </a> -->
+        <template v-if="gonganBeian && gonganRecordCode">
+          <span class="separator">|</span>
+          <a :href="`http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=${gonganRecordCode}`" target="_blank" rel="noopener noreferrer" class="beian-link">
+            {{ gonganBeian }}
+          </a>
+        </template>
       </p>
       <p class="powered-by">Powered by Vue 3 & Vite</p>
     </div>
@@ -21,6 +22,12 @@
 import { ref } from 'vue';
 
 const currentYear = ref(new Date().getFullYear());
+
+// 从环境变量读取配置
+const siteName = import.meta.env.VITE_SITE_NAME || '个人网站';
+const icpBeian = import.meta.env.VITE_ICP_BEIAN || '';
+const gonganBeian = import.meta.env.VITE_GONGAN_BEIAN || '';
+const gonganRecordCode = import.meta.env.VITE_GONGAN_RECORD_CODE || '';
 </script>
 
 <style scoped>

@@ -1,7 +1,14 @@
 import os
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from run import create_app, db
+
+# 北京时区（UTC+8）
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def get_beijing_now():
+    """获取北京时间的当前时间"""
+    return datetime.now(BEIJING_TZ)
 
 # 导入所有需要迁移的数据库模型
 from models.set_type import SetType
@@ -174,9 +181,8 @@ def backup_sqlite_before_migration():
     迁移前备份SQLite数据库
     """
     import shutil
-    import datetime
     
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_beijing_now().strftime("%Y%m%d_%H%M%S")
     backup_file = f"instance/backup_before_migration_{timestamp}.db"
     
     try:

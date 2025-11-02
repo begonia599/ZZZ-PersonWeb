@@ -2,20 +2,22 @@
   <div class="background">
     <div class="slide-container">
       <div class="text-container">
-        <div class="text-line">秋海棠 小栈</div>
-        <div class="text-line">小栈 秋海棠</div>
-        <div class="text-line">秋海棠 小栈</div>
+        <div class="text-line">{{ slogan }}</div>
+        <div class="text-line">{{ slogan }}</div>
+        <div class="text-line">{{ slogan }}</div>
       </div>
       <div class="text-container-dst">
-        <div class="text-line">秋海棠 小栈</div>
-        <div class="text-line">小栈 秋海棠</div>
-        <div class="text-line">秋海棠 小栈</div>
+        <div class="text-line">{{ slogan }}</div>
+        <div class="text-line">{{ slogan }}</div>
+        <div class="text-line">{{ slogan }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// 从环境变量读取网站标语
+const slogan = import.meta.env.VITE_SITE_SLOGAN || '个人小站';
 </script>
 
 <style scoped>
